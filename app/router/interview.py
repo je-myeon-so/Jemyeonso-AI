@@ -1,5 +1,4 @@
 from fastapi import APIRouter
-from schemas.interview import *
 
 from app.interview.answer_analyzer import analyze_answer
 from app.interview.follow_up_generator import generate_follow_up

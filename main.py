@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from router import health, interview
+from app.router import health, interview
 # from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(
