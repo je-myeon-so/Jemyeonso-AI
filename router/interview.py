@@ -4,7 +4,7 @@ from schemas.interview import *
 from app.interview.answer_analyzer import analyze_answer
 from app.interview.follow_up_generator import generate_follow_up
 
-router = APIRouter(prefix="/api/ai", tags=["인터뷰"])
+router = APIRouter( tags=["인터뷰"])
 
 #개발자 바꿔야됨
 
