@@ -2,7 +2,7 @@ import json
 import re
 from kiwipiepy import Kiwi
 from openai import OpenAI
-from config import OPENAI_API_KEY
+from config import OPENAI_API_KEY, MODEL_NAME
 from app.interview.prompt_loader import load_prompt
 
 client = OpenAI(api_key=OPENAI_API_KEY)
@@ -18,7 +18,7 @@ def analyze_text_with_gpt(text: str, question: str, job_role: str) -> dict:
     prompt = prompt_template.format(text=text, question=question, job_role=job_role)
 
     response = client.chat.completions.create(
-        model="gpt-4o",
+        model=MODEL_NAME,
         messages=[
             {"role": "system", "content": "당신은 경험 많은 면접관입니다."},
             {"role": "user", "content": prompt}
