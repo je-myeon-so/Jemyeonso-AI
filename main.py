@@ -22,10 +22,6 @@ app = FastAPI(
 #     allow_headers=["*"],  # 모든 헤더 허용
 # )
 
-@app.get("/")
-def root():
-    return {"message": "Jemyeonso APP is running!"}
-
 app.include_router(interview.router, prefix="/api/ai")
 
 app.include_router(health.router)
