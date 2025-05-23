@@ -1,8 +1,7 @@
 from fastapi import APIRouter
-
 from app.interview.answer_analyzer import analyze_answer
 from app.interview.follow_up_generator import generate_follow_up
-
+from app.schemas.interview import AnalyzeAnswerRequest, AnalyzeAnswerResponse, FollowUpRequest, FollowUpResponse
 router = APIRouter( tags=["인터뷰"])
 
 #개발자 바꿔야됨
