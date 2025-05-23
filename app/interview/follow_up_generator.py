@@ -8,7 +8,7 @@ client = OpenAI(api_key=OPENAI_API_KEY)
 
 
 def generate_follow_up(answer: str, question: str, job_role: str) -> dict:
-    prompt_template = load_prompt("follow_up.txt")
+    prompt_template = load_prompt("follow_up")
     prompt = prompt_template.format(answer=answer.strip(), question=question, job_role=job_role)
 
     response = client.chat.completions.create(

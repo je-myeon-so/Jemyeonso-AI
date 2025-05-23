@@ -14,7 +14,7 @@ def clean_text(text: str) -> str:
 
 
 def analyze_text_with_gpt(text: str, question: str, job_role: str) -> dict:
-    prompt_template = load_prompt("analysis.txt")
+    prompt_template = load_prompt("analysis")
     prompt = prompt_template.format(text=text, question=question, job_role=job_role)
 
     response = client.chat.completions.create(
