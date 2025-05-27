@@ -13,7 +13,7 @@ def clean_text(text: str) -> str:
     return re.sub(r'\s+', ' ', text).strip()
 
 
-def analyze_text_with_gpt(text: str, question: str, job_role: str) -> dict:
+def analyze_text(text: str, question: str, job_role: str) -> dict:
     prompt_template = load_prompt("analysis")
     prompt = prompt_template.format(text=text, question=question, job_role=job_role)
 
@@ -39,5 +39,5 @@ def analyze_answer(question: str, answer: str, job_role: str) -> dict:
     cleaned = clean_text(answer)
     return {
         "original_answer": answer,
-        "analysis_result": analyze_text_with_gpt(cleaned, question, job_role)
+        "analysis_result": analyze_text(cleaned, question, job_role)
     }
