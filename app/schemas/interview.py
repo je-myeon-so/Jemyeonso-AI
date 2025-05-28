@@ -3,10 +3,9 @@ from pydantic import BaseModel
 # -------- 답변 분석 요청/응답 --------
 
 class AnalyzeAnswerRequest(BaseModel):
+    interview_id: int
     question: str
     answer: str
-    jobtype: str
-    category: str
 
 class AnswerAnalysisItem(BaseModel):
     error_text: str
@@ -22,10 +21,9 @@ class AnalyzeAnswerResponse(BaseModel):
 # -------- 꼬리 질문 요청/응답 --------
 
 class FollowUpRequest(BaseModel):
+    interview_id: int
     previousAnswer: str
     previousQuestion: str
-    jobtype: str
-    category: str
 
 class FollowUpResponse(BaseModel):
     code: int

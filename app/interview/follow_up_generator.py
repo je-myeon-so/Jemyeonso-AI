@@ -6,10 +6,15 @@ from app.interview.prompt_loader import load_prompt
 
 client = OpenAI(api_key=OPENAI_API_KEY)
 
-
-def generate_follow_up(answer: str, question: str, job_role: str) -> dict:
-    prompt_template = load_prompt("follow_up")
-    prompt = prompt_template.format(answer=answer.strip(), question=question, job_role=job_role)
+def generate_follow_up(answer: str, question: str, job_role: str, level: str, category: str) -> dict:
+    prompt_template = load_prompt("follow_up.txt")
+    prompt = prompt_template.format(
+        answer=answer.strip(),
+        question=question.strip(),
+        job_role=job_role,
+        level=level,
+        category=category
+    )
 
     response = client.chat.completions.create(
         model=MODEL_NAME,
@@ -18,6 +23,7 @@ def generate_follow_up(answer: str, question: str, job_role: str) -> dict:
             {"role": "user", "content": prompt}
         ]
     )
+
     full_response = response.choices[0].message.content.strip()
     json_match = re.search(r'\{[\s\S]*\}', full_response)
 
@@ -27,7 +33,6 @@ def generate_follow_up(answer: str, question: str, job_role: str) -> dict:
         except json.JSONDecodeError:
             return fallback_question()
     return fallback_question()
-
 
 def fallback_question():
     return {

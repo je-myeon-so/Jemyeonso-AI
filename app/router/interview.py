@@ -2,32 +2,52 @@ from fastapi import APIRouter
 from app.interview.answer_analyzer import analyze_answer
 from app.interview.follow_up_generator import generate_follow_up
 from app.schemas.interview import AnalyzeAnswerRequest, AnalyzeAnswerResponse, FollowUpRequest, FollowUpResponse
+from app.core.mysql_utils import get_context
 router = APIRouter( tags=["인터뷰"])
 
-#개발자 바꿔야됨
-
 @router.post("/answers/analyze", response_model=AnalyzeAnswerResponse)
-async def analyze(request: AnalyzeAnswerRequest):
+def analyze(payload: AnalyzeAnswerRequest):
+    context = get_context(payload.interview_id)
+    if context is None:
+        return {
+            "code": 500,
+            "message": "인터뷰 컨텍스트 조회 실패",
+            "data": None
+        }
+
     result = analyze_answer(
-        question=request.question,
-        answer=request.answer,
-        job_role=request.jobtype  # jobtype → 내부 함수에 전달
+        question=payload.question,
+        answer=payload.answer,
+        job_role=context["job_type"],
+        level=context["question_level"],
+        category=context["question_type"]
     )
+
     return {
         "code": 200,
         "message": "대답 분석을 성공하였습니다",
-        "data": result["analysis_result"]
+        "data": result
     }
 
 @router.post("/questions/followup", response_model=FollowUpResponse)
-async def follow_up(request: FollowUpRequest):
-    followup = generate_follow_up(
+def follow_up_endpoint(request: FollowUpRequest):
+    context = get_context(request.interview_id)
+    if context is None:
+        return {
+            "code": 500,
+            "message": "인터뷰 컨텍스트 조회 실패",
+            "data": None
+        }
+
+    result = generate_follow_up(
         answer=request.previousAnswer,
         question=request.previousQuestion,
-        job_role=request.jobtype  # jobtype → 내부 함수에 전달
+        job_role=context["job_type"],
+        level=context["question_level"],
+        category=context["question_type"]
     )
     return {
         "code": 200,
         "message": "꼬리질문을 생성했습니다.",
-        "data": followup["question"]
+        "data": result
     }
