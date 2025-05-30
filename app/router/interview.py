@@ -17,24 +17,12 @@ def analyze(request: AnalyzeAnswerRequest):
     return result
 
 @router.post("/questions/followup", response_model=FollowUpResponse)
-def follow_up_endpoint(request: FollowUpRequest):
-    context = get_context(request.interview_id)
-    if context is None:
-        return {
-            "code": 500,
-            "message": "인터뷰 컨텍스트 조회 실패",
-            "data": None
-        }
-
+def follow_up(request: FollowUpRequest):
     result = generate_follow_up(
         answer=request.previousAnswer,
         question=request.previousQuestion,
-        job_role=context["job_type"],
-        level=context["question_level"],
-        category=context["question_type"]
+        jobtype=request.jobtype,
+        level=request.level,
+        category=request.category
     )
-    return {
-        "code": 200,
-        "message": "꼬리질문을 생성했습니다.",
-        "data": result
-    }
+    return result

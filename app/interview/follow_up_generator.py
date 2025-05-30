@@ -6,12 +6,12 @@ from app.interview.prompt_loader import load_prompt
 
 client = OpenAI(api_key=OPENAI_API_KEY)
 
-def generate_follow_up(answer: str, question: str, job_role: str, level: str, category: str) -> dict:
+def generate_follow_up(question: str, answer: str, jobtype: str, level: str, category: str) -> dict:
     prompt_template = load_prompt("follow_up.txt")
     prompt = prompt_template.format(
         answer=answer.strip(),
         question=question.strip(),
-        job_role=job_role,
+        jobtype = jobtype,
         level=level,
         category=category
     )

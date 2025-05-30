@@ -1,9 +1,11 @@
-### 꼬리 질문 생성 요청 테스트
+### Follow-up 질문 생성 요청 테스트
 POST http://localhost:8000/api/ai/questions/followup
 Content-Type: application/json
 
 {
-  "interview_id": 1,
   "previousQuestion": "자신의 강점을 말해주세요.",
-  "previousAnswer": "저는 새로운 환경에서도 빠르게 적응할 수 있습니다."
+  "previousAnswer": "저는 새로운 환경에서도 빠르게 적응할 수 있습니다. API 최적화 경험도 있습니다.",
+  "jobtype": "소프트웨어 엔지니어",
+  "level": "medium",
+  "category": "압박면접"
 }
