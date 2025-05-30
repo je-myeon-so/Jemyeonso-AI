@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import Optional
 
 # -------- 답변 분석 요청/응답 --------
 
@@ -29,3 +30,17 @@ class FollowUpResponse(BaseModel):
     code: int
     message: str
     data: dict  # {"question_type": "꼬리질문", "question": "내용"}
+
+# -------- 질문 생성 요청/응답 --------
+
+class GenerateQuestionRequest(BaseModel):
+    level: str
+    jobtype: str
+    category: str
+    question_type: str
+    file_id: Optional[str] = None
+
+class GenerateQuestionResponse(BaseModel):
+    code: int
+    message: str
+    data: dict  # {"question": "내용"}
