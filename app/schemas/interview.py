@@ -3,7 +3,9 @@ from pydantic import BaseModel
 # -------- 답변 분석 요청/응답 --------
 
 class AnalyzeAnswerRequest(BaseModel):
-    interview_id: int
+    question_category: str
+    question_level: str
+    jobtype: str
     question: str
     answer: str
 
@@ -21,7 +23,9 @@ class AnalyzeAnswerResponse(BaseModel):
 # -------- 꼬리 질문 요청/응답 --------
 
 class FollowUpRequest(BaseModel):
-    interview_id: int
+    question_category: str
+    question_level: str
+    jobtype: str
     previousAnswer: str
     previousQuestion: str
 

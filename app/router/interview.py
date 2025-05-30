@@ -6,28 +6,15 @@ from app.core.mysql_utils import get_context
 router = APIRouter( tags=["인터뷰"])
 
 @router.post("/answers/analyze", response_model=AnalyzeAnswerResponse)
-def analyze(payload: AnalyzeAnswerRequest):
-    context = get_context(payload.interview_id)
-    if context is None:
-        return {
-            "code": 500,
-            "message": "인터뷰 컨텍스트 조회 실패",
-            "data": None
-        }
-
+def analyze(request: AnalyzeAnswerRequest):
     result = analyze_answer(
-        question=payload.question,
-        answer=payload.answer,
-        job_role=context["job_type"],
-        level=context["question_level"],
-        category=context["question_type"]
+        question=request.question,
+        answer=request.answer,
+        jobtype=request.jobtype,
+        level=request.level,
+        category=request.category
     )
-
-    return {
-        "code": 200,
-        "message": "대답 분석을 성공하였습니다",
-        "data": result
-    }
+    return result
 
 @router.post("/questions/followup", response_model=FollowUpResponse)
 def follow_up_endpoint(request: FollowUpRequest):

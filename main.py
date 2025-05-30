@@ -23,7 +23,6 @@ app = FastAPI(
 # )
 
 app.include_router(interview.router, prefix="/api/ai")
-
 app.include_router(health.router)
 
 if __name__ == "__main__":
