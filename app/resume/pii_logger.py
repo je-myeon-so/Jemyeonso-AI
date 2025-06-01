@@ -1,6 +1,6 @@
 import json
 from datetime import datetime, timezone, timedelta
-from app.core.mysql_utils import insert_one
+from app.core.s3_utils import upload_file_to_s3
 
 def log_pii_deletion(user_id: str, file_id: str, original_filename: str, detected_fields: list, deleted_fields: list) -> bool:
     now = datetime.now(timezone(timedelta(hours=9))).isoformat()
@@ -10,7 +10,7 @@ def log_pii_deletion(user_id: str, file_id: str, original_filename: str, detecte
         "message": "파일 업로드 및 개인 정보 삭제를 성공했습니다",
         "data": {
             "deleted_at": now,
-            "deleted_by": "AI_server",
+            "deleted_by": "backend_server_01",
             "user_id": user_id,
             "file_id": file_id,
             "detected_pii_fields": detected_fields,
@@ -23,14 +23,11 @@ def log_pii_deletion(user_id: str, file_id: str, original_filename: str, detecte
         }
     }
 
-    query = """
-        INSERT INTO pii_logs (
-            user_id,
-            file_id,
-            log_json
-        ) VALUES (%s, %s, %s)
-    """
+    json_bytes = json.dumps(log_payload, ensure_ascii=False).encode("utf-8")
+    object_key = f"pii-logs/{file_id}.json"
 
-    params = (user_id, file_id, json.dumps(log_payload, ensure_ascii=False))
-
-    return insert_one(query, params)
+    return upload_file_to_s3(
+        file_bytes=json_bytes,
+        object_key=object_key,
+        content_type="application/json"
+    )

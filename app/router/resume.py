@@ -1,8 +1,8 @@
-from fastapi import APIRouter, UploadFile, Form
+from fastapi import APIRouter, UploadFile, Form, File
 from app.resume.pii_detector import detect_pii
 from app.resume.pii_logger import log_pii_deletion
 
-router = APIRouter()
+router = APIRouter(tags=["개인정보 삭제"])
 
 @router.post("/resume/analyze")
 async def analyze_resume(user_id: str = Form(...), file_id: str = Form(...), original_filename: str = Form(...), text: str = Form(...)):
