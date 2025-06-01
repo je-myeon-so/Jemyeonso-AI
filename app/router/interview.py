@@ -2,7 +2,6 @@ from fastapi import APIRouter
 from app.interview.answer_analyzer import analyze_answer
 from app.interview.follow_up_generator import generate_follow_up
 from app.schemas.interview import AnalyzeAnswerRequest, AnalyzeAnswerResponse, FollowUpRequest, FollowUpResponse
-from app.core.mysql_utils import get_context
 router = APIRouter( tags=["인터뷰"])
 
 @router.post("/answers/analyze", response_model=AnalyzeAnswerResponse)

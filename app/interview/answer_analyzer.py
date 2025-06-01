@@ -4,8 +4,6 @@ from openai import OpenAI
 from kiwipiepy import Kiwi
 from config import OPENAI_API_KEY, MODEL_NAME
 from app.interview.prompt_loader import load_prompt
-from app.core.mysql_utils import get_context  # 인터뷰 컨텍스트 가져오는 함수
-from pprint import pprint
 
 client = OpenAI(api_key=OPENAI_API_KEY)
 kiwi = Kiwi()

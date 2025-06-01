@@ -1,0 +1,15 @@
+### 테스트용 이력서 텍스트로 PII 제거 요청
+POST http://localhost:8000/api/ai/resume/analyze
+Content-Type: application/x-www-form-urlencoded
+
+user_id=user_0923&
+file_id=resume_10123&
+original_filename=resume_april_upload.pdf&
+text=이름: 김지훈
+이메일: jihun.kim92@gmail.com
+전화번호: 010-1234-5678
+주소: 서울특별시 강남구 테헤란로 123
+학력: 고려대학교 컴퓨터학과 졸업
+경력: 카카오에서 3년간 백엔드 개발자로 근무
+자격증: 정보처리기사
+포트폴리오: https://jihun.dev

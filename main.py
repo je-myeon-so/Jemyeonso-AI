@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.router import health, interview
+from app.router import health, interview, resume
 # from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(
@@ -23,6 +23,7 @@ app = FastAPI(
 # )
 
 app.include_router(interview.router, prefix="/api/ai")
+app.include_router(resume.router, prefix="/api/ai")
 app.include_router(health.router)
 
 if __name__ == "__main__":
