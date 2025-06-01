@@ -2,31 +2,34 @@ from transformers import pipeline
 from app.resume.regex_utils import detect_regex_pii
 from typing import Dict, List
 
+# NER 파이프라인 (기존 모델 유지)
 ner = pipeline("ner", model="FacebookAI/xlm-roberta-large-finetuned-conll03-english", aggregation_strategy="simple")
 
 def detect_pii(text: str) -> Dict:
+    # 1. 탐지 수행
     ner_entities = ner(text)
-    regex_entities = detect_regex_pii(text)
+    regex_result = detect_regex_pii(text)
 
-    masked_text = text
-    detected_fields = set()
-    deleted_fields = []
-
+    # 2. NER 결과 정리
+    ner_result = {}
     for ent in ner_entities:
         label = ent["entity_group"].lower()
         if label in ["person", "organization", "location"]:
-            masked_text = masked_text.replace(ent["word"], f"[REDACTED_{label.upper()}]")
-            detected_fields.add(label)
-            deleted_fields.append(label)
+            ner_result.setdefault(label, []).append(ent["word"])
 
-    for label, matches in regex_entities.items():
-        for match in matches:
+    # 3. 마스킹
+    masked_text = text
+    for label, words in ner_result.items():
+        for word in set(words):
+            masked_text = masked_text.replace(word, f"[REDACTED_{label.upper()}]")
+
+    for label, matches in regex_result.items():
+        for match in set(matches):
             masked_text = masked_text.replace(match, f"[REDACTED_{label.upper()}]")
-        detected_fields.add(label)
-        deleted_fields.append(label)
 
+    # 4. 반환 구조 (로그 작성용 포맷 포함)
     return {
-        "anonymized_text": masked_text,
-        "detected_pii_fields": list(detected_fields),
-        "deleted_fields": list(set(deleted_fields)),
+        "regex_result": regex_result,
+        "ner_result": ner_result,
+        "anonymized_text": masked_text
     }

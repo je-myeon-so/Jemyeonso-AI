@@ -1,9 +1,12 @@
-import json
 from datetime import datetime, timezone, timedelta
-from app.core.s3_utils import upload_file_to_s3
+from typing import Dict, List, Any
 
-def log_pii_deletion(user_id: str, file_id: str, original_filename: str, detected_fields: list, deleted_fields: list) -> bool:
+def create_pii_log_payload(user_id: str, file_id: str, original_filename: str, regex_result: Dict[str, List[str]], ner_result: Dict[str, List[str]]) -> Dict[str, Any]:
     now = datetime.now(timezone(timedelta(hours=9))).isoformat()
+
+    regex_keys = set(regex_result.keys())
+    ner_keys = set(ner_result.keys())
+    all_detected_keys = sorted(regex_keys.union(ner_keys))
 
     log_payload = {
         "code": "200",
@@ -13,8 +16,8 @@ def log_pii_deletion(user_id: str, file_id: str, original_filename: str, detecte
             "deleted_by": "backend_server_01",
             "user_id": user_id,
             "file_id": file_id,
-            "detected_pii_fields": detected_fields,
-            "deleted_fields": deleted_fields,
+            "detected_pii_fields": all_detected_keys,
+            "deleted_fields": all_detected_keys,
             "deletion_method": "anonymization",
             "deletion_reason": "policy_auto",
             "deletion_status": "success",
@@ -23,11 +26,4 @@ def log_pii_deletion(user_id: str, file_id: str, original_filename: str, detecte
         }
     }
 
-    json_bytes = json.dumps(log_payload, ensure_ascii=False).encode("utf-8")
-    object_key = f"pii-logs/{file_id}.json"
-
-    return upload_file_to_s3(
-        file_bytes=json_bytes,
-        object_key=object_key,
-        content_type="application/json"
-    )
+    return log_payload
