@@ -11,15 +11,14 @@ client = OpenAI(api_key=OPENAI_API_KEY)
 kiwi = Kiwi()
 
 
-def analyze_answer(question: str, answer: str, job_role: str, level: str, category: str) -> dict:
+def analyze_answer(question: str, answer: str, job_role: str, level: str) -> dict:
     # 프롬프트 불러오기 및 변수 삽입
     prompt_template = load_prompt("analysis.txt")
     prompt = prompt_template.format(
         question=question.strip(),
         text=answer.strip(),
         job_role=job_role,
-        level=level,
-        category=category
+        level=level
     )
 
     # GPT 호출
@@ -79,7 +78,5 @@ if __name__ == "__main__":
 
         jobtype = context["job_type"]
         level = context["question_level"]
-        category = context["question_type"]
-
-        result = analyze_answer(question, answer, jobtype, level, category)
+        result = analyze_answer(question, answer, jobtype, level)
         pprint(result)

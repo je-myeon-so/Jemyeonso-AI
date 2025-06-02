@@ -6,7 +6,7 @@ mysql_config = {
     "user": USER,
     "password": PASSWORD,
     "database": DATABASE,
-    "port": PORT,
+    "port": int(PORT) if PORT else 3306,  # 문자열로 환경 변수 받았을 경우 변환
     "charset": CHARSET,
 }
 
