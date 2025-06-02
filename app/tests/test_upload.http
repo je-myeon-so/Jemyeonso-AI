@@ -1,0 +1,14 @@
+### S3에 PDF 또는 JSON 파일 업로드
+POST http://localhost:8000/api/s3/upload
+Content-Type: multipart/form-data
+
+--boundary
+Content-Disposition: form-data; name="file"; filename="resume_sample.pdf"
+Content-Type: application/pdf
+
+< ./sample_files/resume_sample.pdf
+--boundary
+Content-Disposition: form-data; name="s3_key"
+
+uploads/test_upload_resume.pdf
+--boundary--

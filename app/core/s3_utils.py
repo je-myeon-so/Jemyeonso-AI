@@ -50,4 +50,4 @@ def test_bucket_access(bucket_name: str) -> bool:
         return True
     except Exception as e:
         print(f"❌ 버킷 접근 실패 ({bucket_name}):", e)
-        return False 
+        return False

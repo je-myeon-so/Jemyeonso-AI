@@ -6,12 +6,12 @@ from app.interview.prompt_loader import load_prompt
 
 client = OpenAI(api_key=OPENAI_API_KEY)
 
-def generate_follow_up(answer: str, question: str, job_role: str, level: str, category: str) -> dict:
+def generate_follow_up(question: str, answer: str, jobtype: str, level: str, category: str) -> dict:
     prompt_template = load_prompt("follow_up.txt")
     prompt = prompt_template.format(
         answer=answer.strip(),
         question=question.strip(),
-        job_role=job_role,
+        jobtype=jobtype,
         level=level,
         category=category
     )
@@ -25,19 +25,29 @@ def generate_follow_up(answer: str, question: str, job_role: str, level: str, ca
     )
 
     full_response = response.choices[0].message.content.strip()
-    json_match = re.search(r'\{[\s\S]*\}', full_response)
+    json_match = re.search(r'\{[\s\S]*?\}', full_response)  # 최소 매칭으로 수정
+    # print("GPT 응답 원본:\n", full_response)
 
     if json_match:
         try:
-            return json.loads(json_match.group(0))
+            parsed = json.loads(json_match.group(0))
+            if "question" in parsed:
+                return {
+                    "code": 200,
+                    "message": "꼬리질문 생성 완료",
+                    "data": parsed
+                }
         except json.JSONDecodeError:
-            return fallback_question()
+            pass
+
     return fallback_question()
+
 
 def fallback_question():
     return {
-        "question": {
-            "questiontext": "이 직무에 지원하게 된 동기는 무엇인가요?",
-            "questiontype": "꼬리질문"
+        "code": 200,
+        "message": "꼬리질문 생성 실패, 기본 질문 반환",
+        "data": {
+            "question": "이 직무에 지원하게 된 동기는 무엇인가요?"
         }
     }
