@@ -21,7 +21,7 @@ def detect_pii(text: str, debug: bool = False) -> Dict:
     for ent in ner_entities:
         raw_label = ent["entity_group"].upper()
         mapped_label = NER_LABEL_MAP.get(raw_label)
-        if mapped_label in ["name", "location"]:  # 필요한 항목만 포함
+        if mapped_label in ["name", "location"]:  # 원하는 항목만 포함
             ner_result.setdefault(mapped_label, []).append(ent["word"])
 
     if debug:
@@ -38,22 +38,23 @@ def detect_pii(text: str, debug: bool = False) -> Dict:
     # Regex 기반 마스킹
     for label, matches in regex_result.items():
         for match in set(matches):
-            # 튜플일 경우 문자열로 병합
-            if isinstance(match, tuple):
-                match_str = "".join(match)
-            else:
-                match_str = match
+            match_str = "".join(match) if isinstance(match, tuple) else match
             masked_text = masked_text.replace(match_str, f"[REDACTED_{label.upper()}]")
 
     # NER 기반 마스킹
     for label, words in ner_result.items():
-        for word in sorted(set(words), key=len, reverse=True):  # 긴 단어 우선 처리
+        for word in sorted(set(words), key=len, reverse=True):
             masked_text = masked_text.replace(word, f"[REDACTED_{label.upper()}]")
+
+    # 최종적으로 감지된 PII 종류 (NER + Regex 통합)
+    detected_labels = set(regex_result.keys()) | set(ner_result.keys())
 
     return {
         "regex_result": regex_result,
         "ner_result": ner_result,
-        "anonymized_text": masked_text
+        "anonymized_text": masked_text,
+        "detected_pii_fields": list(detected_labels),
+        "deleted_fields": list(detected_labels)
     }
 
 # 테스트용

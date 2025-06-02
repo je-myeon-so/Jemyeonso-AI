@@ -13,7 +13,7 @@ def create_pii_log_payload(user_id: str, file_id: str, original_filename: str, r
         "message": "파일 업로드 및 개인 정보 삭제를 성공했습니다",
         "data": {
             "deleted_at": now,
-            "deleted_by": "backend_server_01",
+            "deleted_by": "AI_SERVER",
             "user_id": user_id,
             "file_id": file_id,
             "detected_pii_fields": all_detected_keys,
