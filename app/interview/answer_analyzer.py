@@ -10,7 +10,6 @@ kiwi = Kiwi()
 
 
 def analyze_answer(question: str, answer: str, jobtype: str, level: str, category: str) -> dict:
-    # 프롬프트 불러오기 및 변수 삽입
     prompt_template = load_prompt("analysis.txt")
     prompt = prompt_template.format(
         question=question.strip(),
@@ -20,7 +19,6 @@ def analyze_answer(question: str, answer: str, jobtype: str, level: str, categor
         category=category
     )
 
-    # GPT 호출
     response = client.chat.completions.create(
         model=MODEL_NAME,
         messages=[
@@ -35,7 +33,6 @@ def analyze_answer(question: str, answer: str, jobtype: str, level: str, categor
         ]
     )
 
-    # 응답 파싱
     full_response = response.choices[0].message.content.strip()
     json_match = re.search(r'\{[\s\S]*\}', full_response)
 
@@ -43,21 +40,24 @@ def analyze_answer(question: str, answer: str, jobtype: str, level: str, categor
         try:
             analysis_result = json.loads(json_match.group(0))
             return {
-                "original_answer": answer,
-                "analysis_result": analysis_result
+                "code": 200,
+                "message": "분석 완료",
+                "data": analysis_result
             }
         except json.JSONDecodeError:
             return {
-                "original_answer": answer,
-                "analysis_result": {
+                "code": 500,
+                "message": "JSON 파싱 실패",
+                "data": {
                     "error": "모델이 유효한 JSON을 생성하지 않았습니다.",
                     "raw_output": full_response
                 }
             }
 
     return {
-        "original_answer": answer,
-        "analysis_result": {
+        "code": 500,
+        "message": "JSON 응답 없음",
+        "data": {
             "error": "모델 응답에서 JSON 데이터를 찾을 수 없습니다.",
             "raw_output": full_response
         }
