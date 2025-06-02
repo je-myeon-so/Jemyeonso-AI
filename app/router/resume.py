@@ -3,7 +3,11 @@ from fastapi.responses import JSONResponse
 from app.schemas.resume import ResumeUploadRequest, ResumeUploadResponse
 from app.resume.parser import file_extract
 from app.core.mysql_utils import insert_one
+from app.resume.pii_detector import detect_pii
+from app.resume.pii_logger import create_pii_log_payload
+from app.core.s3_utils import upload_file_to_s3
 from typing import Optional
+import json
 
 router = APIRouter(
     tags=["이력서"]
@@ -12,7 +16,8 @@ router = APIRouter(
 @router.post("/file/", response_model=ResumeUploadResponse)
 async def upload_resume(
     file_id: str = Form(...),
-    file: UploadFile = File(...)
+    file: UploadFile = File(...),
+    user_id: str = Form(...)
 ):
     # 파일 확장자 확인
     if not file.filename.lower().endswith('.pdf'):
@@ -39,14 +44,37 @@ async def upload_resume(
             }
         )
     
-    # 추출한 텍스트를 DB에 저장
+    # 개인정보 검출 및 익명화
+    pii_result = detect_pii(extracted_text)
+    anonymized_text = pii_result["anonymized_text"]
+    
+    # PII 로그 생성
+    pii_payload = create_pii_log_payload(
+        user_id=user_id,
+        file_id=file_id,
+        original_filename=file.filename,
+        regex_result=pii_result["regex_result"],
+        ner_result=pii_result["ner_result"]
+    )
+    
+    # S3에 PII 로그 업로드
+    json_bytes = json.dumps(pii_payload, ensure_ascii=False).encode("utf-8")
+    object_key = f"pii-logs/{file_id}.json"
+    
+    upload_success = upload_file_to_s3(
+        file_bytes=json_bytes,
+        object_key=object_key,
+        content_type="application/json"
+    )
+    
+    # 익명화된 텍스트를 DB에 저장
     try:
         query = """
         INSERT INTO resumes (file_id, resume_text) 
         VALUES (%s, %s)
         ON DUPLICATE KEY UPDATE resume_text = %s
         """
-        success = insert_one(query, (file_id, extracted_text, extracted_text))
+        success = insert_one(query, (file_id, anonymized_text, anonymized_text))
         
         if not success:
             return JSONResponse(
@@ -75,4 +103,60 @@ async def upload_resume(
             "message": "파일 업로드 및 개인 정보 삭제를 성공했습니다",
             "data": None
         }
-    ) 
+    )
+
+# 개인정보 관련 API 엔드포인트
+@router.post("/resume/pii-log")
+async def generate_pii_log_json(
+    user_id: str = Form(...),
+    file_id: str = Form(...),
+    original_filename: str = Form(...),
+    text: str = Form(...)
+):
+    result = detect_pii(text)
+    payload = create_pii_log_payload(
+        user_id=user_id,
+        file_id=file_id,
+        original_filename=original_filename,
+        regex_result=result["regex_result"],
+        ner_result=result["ner_result"]
+    )
+
+    return {
+        "code": 200,
+        "message": "PII 로그 JSON 생성 완료",
+        "log": payload,
+        "anonymized_text": result["anonymized_text"]
+    }
+
+@router.post("/resume/pii-upload")
+async def delete_pii_and_upload_log(
+    user_id: str = Form(...),
+    file_id: str = Form(...),
+    original_filename: str = Form(...),
+    text: str = Form(...)
+):
+    result = detect_pii(text)
+    payload = create_pii_log_payload(
+        user_id=user_id,
+        file_id=file_id,
+        original_filename=original_filename,
+        regex_result=result["regex_result"],
+        ner_result=result["ner_result"]
+    )
+
+    # S3 업로드용 JSON 직렬화 및 바이트 변환
+    json_bytes = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+    object_key = f"pii-logs/{file_id}.json"
+
+    upload_success = upload_file_to_s3(
+        file_bytes=json_bytes,
+        object_key=object_key,
+        content_type="application/json"
+    )
+
+    return {
+        "code": 200 if upload_success else 500,
+        "message": "PII 로그 업로드 완료" if upload_success else "PII 로그 업로드 실패",
+        "anonymized_text": result["anonymized_text"]
+    } 
