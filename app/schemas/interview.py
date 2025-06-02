@@ -34,9 +34,8 @@ class FollowUpResponse(BaseModel):
 # -------- 질문 생성 요청/응답 --------
 
 class GenerateQuestionRequest(BaseModel):
-    level: str
+    question_level: str
     jobtype: str
-    category: str
     question_type: str
     file_id: Optional[str] = None
 

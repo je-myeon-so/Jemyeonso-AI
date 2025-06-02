@@ -15,8 +15,7 @@ def generate_question_endpoint(request: GenerateQuestionRequest):
     try:
         result = generate_question(
             job_type=request.jobtype,
-            level=request.level,
-            category=request.category,
+            question_level=request.question_level,
             question_type=request.question_type,
             file_id=request.file_id
         )
@@ -48,7 +47,7 @@ def analyze(payload: AnalyzeAnswerRequest):
         question=payload.question,
         answer=payload.answer,
         job_role=context["job_type"],
-        level=context["question_level"],
+        question_level=context["question_level"],
         category=context["question_type"]
     )
 
@@ -72,7 +71,7 @@ def follow_up_endpoint(request: FollowUpRequest):
         answer=request.previousAnswer,
         question=request.previousQuestion,
         job_role=context["job_type"],
-        level=context["question_level"],
+        question_level=context["question_level"],
         category=context["question_type"]
     )
     return {
