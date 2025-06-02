@@ -4,9 +4,7 @@ from typing import Optional
 # -------- 답변 분석 요청/응답 --------
 
 class AnalyzeAnswerRequest(BaseModel):
-    question_category: str
-    question_level: str
-    jobtype: str
+    interview_id: int
     question: str
     answer: str
 
@@ -24,9 +22,7 @@ class AnalyzeAnswerResponse(BaseModel):
 # -------- 꼬리 질문 요청/응답 --------
 
 class FollowUpRequest(BaseModel):
-    question_category: str
-    question_level: str
-    jobtype: str
+    interview_id: int
     previousAnswer: str
     previousQuestion: str
 
