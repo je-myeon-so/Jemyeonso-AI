@@ -11,8 +11,8 @@ def analyze(request: AnalyzeAnswerRequest):
         question=request.question,
         answer=request.answer,
         jobtype=request.jobtype,
-        level=request.level,
-        category=request.category
+        level=request.question_level,
+        category=request.question_category
     )
     return result
 
@@ -22,7 +22,7 @@ def follow_up(request: FollowUpRequest):
         answer=request.previousAnswer,
         question=request.previousQuestion,
         jobtype=request.jobtype,
-        level=request.level,
-        category=request.category
+        level=request.question_level,
+        category=request.question_category
     )
     return result
