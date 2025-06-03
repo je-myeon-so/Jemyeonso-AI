@@ -9,6 +9,7 @@ class GenerateQuestionRequest(BaseModel):
     question_category: str
     previous_question: Optional[str] = None
     previous_answer: Optional[str] = None
+    document_id: Optional[int] = None
 
 class QuestionData(BaseModel):
     question_type: str

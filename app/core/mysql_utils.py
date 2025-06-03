@@ -1,4 +1,5 @@
 from app.core.mysql_database import get_connection
+from typing import Optional
 
 def update_redacted_resume_content(document_id: int, redacted_text: str) -> bool:
     """
@@ -32,4 +33,20 @@ def update_redacted_resume_content(document_id: int, redacted_text: str) -> bool
         return False
     finally:
         cursor.close()
+        conn.close()
+
+def get_resume_text(document_id: str) -> Optional[str]:
+    query = "SELECT content FROM documents WHERE id = %s AND type = 'resume'"
+    conn = get_connection()
+    if not conn:
+        return None
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute(query, (document_id,))
+            row = cursor.fetchone()
+            return row[0] if row else None
+    except Exception as e:
+        print("❌ 이력서 조회 실패:", e)
+        return None
+    finally:
         conn.close()

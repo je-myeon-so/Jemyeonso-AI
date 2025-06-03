@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from typing import List
 from app.interview.answer_analyzer import analyze_answer
-from app.interview.question_generator import generate_question
+from app.interview.question_generator import generate_question, fallback_question
 from app.schemas.interview import (
     AnalyzeAnswerRequest, AnalyzeAnswerResponse,
     GenerateQuestionRequest, GenerateQuestionResponse
@@ -17,7 +17,8 @@ def generate_question_endpoint(request: GenerateQuestionRequest):
             question_level=request.question_level,
             question_category=request.question_category,
             previous_question=request.previous_question,
-            previous_answer=request.previous_answer
+            previous_answer=request.previous_answer,
+            document_id = request.document_id
         )
         return {
             "code": 200,
@@ -29,7 +30,7 @@ def generate_question_endpoint(request: GenerateQuestionRequest):
         return {
             "code": 500,
             "message": "질문 생성 중 오류가 발생했습니다.",
-            "data": None
+            "data": fallback_question()
         }
 
 

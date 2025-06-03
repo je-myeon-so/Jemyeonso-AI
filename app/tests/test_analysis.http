@@ -17,7 +17,7 @@ Content-Type: application/json
   "question_level": "중",
   "jobtype": "데이터 분석가",
   "question": "가장 기억에 남는 데이터 분석 프로젝트는 무엇인가요?",
-  "answer": "어... 잘 모르겠어요.. 시이이발 제가 대학원에서 진행했던 스마트시티 데이터 분석 프로젝트가 가장 기억에 남습니다. 해당 프로젝트에서는 교통량 데이터를 기반으로 도시 내 교통 흐름을 예측하고, 예측 결과를 시각화하여 정책 제안서로 정리했습니다. 그 과정에서 Python의 pandas, seaborn, 그리고 Prophet을 활용했고, 처음으로 time-series forecasting을 본격적으로 해본 경험이었습니다. 팀원들과 협업하며 주기적으로 코드 리뷰를 하고, 서로 피드백을 주고받은 것도 인상 깊었습니다."
+  "answer": "제가 대학원에서 진행했던 스마트시티 데이터 분석 프로젝트가 가장 기억에 남습니다. 해당 프로젝트에서는 교통량 데이터를 기반으로 도시 내 교통 흐름을 예측하고, 예측 결과를 시각화하여 정책 제안서로 정리했습니다. 그 과정에서 Python의 pandas, seaborn, 그리고 Prophet을 활용했고, 처음으로 time-series forecasting을 본격적으로 해본 경험이었습니다. 팀원들과 협업하며 주기적으로 코드 리뷰를 하고, 서로 피드백을 주고받은 것도 인상 깊었습니다."
 }
 ###
 POST http://localhost:8000/api/ai/answers/analyze
