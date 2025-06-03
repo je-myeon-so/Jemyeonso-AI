@@ -1,0 +1,42 @@
+# Python 가상환경
+.venv/
+venv/
+
+# Python 캐시
+__pycache__/
+*.py[cod]
+*.so
+
+# dotenv 파일
+.env
+
+# macOS 시스템 파일
+.DS_Store
+
+# 로그 파일
+*.log
+
+# 테스트 결과
+htmlcov/
+.coverage
+.tox/
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+
+# 에디터/IDE 관련 파일
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# pip cache
+pip-wheel-metadata/
+*.egg-info/
+dist/
+build/
+
+# FastAPI + Uvicorn pid/log 관련 (선택적)
+*.pid
+*.db

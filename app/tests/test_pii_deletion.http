@@ -1,0 +1,57 @@
+### PII 로그 JSON만 생성 (S3 업로드 없음)
+POST http://localhost:8000/api/ai/resume/pii-log
+Content-Type: application/x-www-form-urlencoded
+
+user_id=user_0923&
+file_id=resume_20250601_001&
+original_filename=resume_june.pdf&
+text=이름: 박수민
+이메일: soomin.park88@gmail.com
+전화번호: 010-5678-1234
+주소: 부산광역시 해운대구 센텀로 456
+경력: 네이버에서 2년간 프론트엔드 개발자로 근무
+포트폴리오: https://soomin.dev
+
+### 이수민 이력서에서 PII 로그만 생성 (업로드 없음)
+POST http://localhost:8000/api/ai/resume/pii-log
+Content-Type: application/x-www-form-urlencoded
+
+user_id=user_lee_sumin&
+file_id=resume_lee_sumin_001&
+original_filename=이수민_이력서.pdf&
+text=성 명 이수민 영 문 Lee sumin
+연 락 처 010-0000-0000 생년월일 2001.01.01
+학력사항: 2017-2019 광남고등학교 졸업, 2020-2024 한양대학교 컴퓨터공학과 졸업
+성적: 3.8/4.5
+자격증: 정보처리기사 (2023.02.20), 빅데이터분석기사 (2021.10.01)
+활동: 2022.10.28 교내 해커톤 은상, 2023.12.12 네이버 AI 해커톤 본선 진출
+
+###
+
+### PII 로그 JSON 생성 후 S3에 업로드
+POST http://localhost:8000/api/ai/resume/pii-upload
+Content-Type: application/x-www-form-urlencoded
+
+user_id=user_0923&
+file_id=resume_20250601_001&
+original_filename=resume_june.pdf&
+text=이름: 박수민
+이메일: soomin.park88@gmail.com
+전화번호: 010-5678-1234
+주소: 부산광역시 해운대구 센텀로 456
+경력: 네이버에서 2년간 프론트엔드 개발자로 근무
+포트폴리오: https://soomin.dev
+
+### 이수민 이력서에서 PII 로그 생성 및 S3 업로드
+POST http://localhost:8000/api/ai/resume/pii-upload
+Content-Type: application/x-www-form-urlencoded
+
+user_id=user_lee_sumin&
+file_id=resume_lee_sumin_001&
+original_filename=이수민_이력서.pdf&
+text=성 명 이수민 영 문 Lee sumin
+연 락 처 010-0000-0000 생년월일 2001.01.01
+학력사항: 2017-2019 광남고등학교 졸업, 2020-2024 한양대학교 컴퓨터공학과 졸업
+성적: 3.8/4.5
+자격증: 정보처리기사 (2023.02.20), 빅데이터분석기사 (2021.10.01)
+활동: 2022.10.28 교내 해커톤 은상, 2023.12.12 네이버 AI 해커톤 본선 진출
