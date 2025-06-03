@@ -26,8 +26,6 @@ text=성 명 이수민 영 문 Lee sumin
 자격증: 정보처리기사 (2023.02.20), 빅데이터분석기사 (2021.10.01)
 활동: 2022.10.28 교내 해커톤 은상, 2023.12.12 네이버 AI 해커톤 본선 진출
 
-###
-
 ### PII 로그 JSON 생성 후 S3에 업로드
 POST http://localhost:8000/api/ai/resume/pii-upload
 Content-Type: application/x-www-form-urlencoded
