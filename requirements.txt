@@ -28,6 +28,7 @@ networkx==3.2.1
 numpy==2.0.2
 openai==1.82.0
 packaging==25.0
+pdfplumber==0.10.4
 pillow==11.2.1
 pydantic==2.11.5
 pydantic_core==2.33.2

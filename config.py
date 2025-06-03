@@ -8,12 +8,6 @@ MODEL_NAME = os.getenv("MODEL_NAME")
 
 # 데이터베이스 연결 설정
 URL = os.getenv("DB_URL")
-HOST = os.getenv("DB_HOST")
-USER = os.getenv("DB_USER")
-PASSWORD = os.getenv("DB_PASSWORD")
-PORT = os.getenv("DB_PORT", 3306)  # 기본값 3306
-DATABASE = os.getenv("DB_NAME")
-CHARSET = os.getenv("DB_CHARSET", "utf8mb4")  # 기본값 utf8mb4
 
 # AWS S3 연결 설정
 REGION = os.getenv("AWS_REGION_STATIC")

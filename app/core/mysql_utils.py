@@ -1,42 +1,23 @@
 from app.core.mysql_database import get_connection
 
-def get_context(interview_id: int):
-    conn = get_connection()
-    if not conn:
-        return None
+def update_redacted_resume_content(document_id: int, redacted_text: str) -> bool:
+    """
+    기존 documents 테이블에서 content를 redacted_text로 업데이트합니다.
 
-    try:
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute("""
-            SELECT question_type, question_level, job_type 
-            FROM interviews 
-            WHERE id = %s
-        """, (interview_id,))
-        return cursor.fetchone()
-    except Exception as e:
-        print("❌ DB 조회 실패:", e)
-        return None
-    finally:
-        cursor.close()
-        conn.close()
-        
-def fetch_one(query: str, params: tuple = ()):
-    conn = get_connection()
-    if not conn:
-        return None
-    try:
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute(query, params)
-        result = cursor.fetchone()
-        return result
-    except Exception as e:
-        print("❌ Fetch 실패:", e)
-        return None
-    finally:
-        cursor.close()
-        conn.close()
+    Args:
+        document_id (int): 수정 대상 문서 ID
+        redacted_text (str): PII 제거된 본문 텍스트
 
-def insert_one(query: str, params: tuple = ()):
+    Returns:
+        bool: 성공 여부
+    """
+    query = """
+        UPDATE documents
+        SET content = %s, updated_at = NOW()
+        WHERE id = %s AND type = 'resume'
+    """
+    params = (redacted_text, document_id)
+
     conn = get_connection()
     if not conn:
         return False
@@ -46,7 +27,7 @@ def insert_one(query: str, params: tuple = ()):
         conn.commit()
         return True
     except Exception as e:
-        print("❌ Insert 실패:", e)
+        print("❌ content 업데이트 실패:", e)
         conn.rollback()
         return False
     finally:

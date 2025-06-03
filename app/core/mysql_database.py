@@ -1,13 +1,16 @@
-from config import USER, HOST, PORT, PASSWORD, DATABASE, CHARSET
+from config import URL
+from urllib.parse import urlparse
 from mysql.connector import pooling, Error
 
+parsed = urlparse(URL)
+
 mysql_config = {
-    "host": HOST,
-    "user": USER,
-    "password": PASSWORD,
-    "database": DATABASE,
-    "port": int(PORT) if PORT else 3306,  # 문자열로 환경 변수 받았을 경우 변환
-    "charset": CHARSET,
+    "host": parsed.hostname,
+    "user": parsed.username,
+    "password": parsed.password,
+    "database": parsed.path[1:],
+    "port": parsed.port,  # 문자열로 환경 변수 받았을 경우 변환
+    "charset": 'utf8mb4',
 }
 
 # 커넥션 풀 생성
