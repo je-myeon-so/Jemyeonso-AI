@@ -19,7 +19,7 @@ class AnswerAnalysisItem(BaseModel):
 class AnalyzeAnswerResponse(BaseModel):
     code: int
     message: str
-    data: dict  # {"analysis": [AnswerAnalysisItem]}
+    data: dict  # {"analysis.txt": [AnswerAnalysisItem]}
 
 # -------- 꼬리 질문 요청/응답 --------
 

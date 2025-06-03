@@ -1,16 +1,14 @@
 import json
 import re
-from openai import OpenAI
-from kiwipiepy import Kiwi
-from config import OPENAI_API_KEY, MODEL_NAME
 from app.interview.prompt_loader import load_prompt
-
-client = OpenAI(api_key=OPENAI_API_KEY)
-kiwi = Kiwi()
-
+from app.core.llm_utils import call_llm
 
 def analyze_answer(question: str, answer: str, jobtype: str, level: str, category: str) -> dict:
-    prompt_template = load_prompt("analysis.txt")
+    """
+    면접 답변을 분석하여 JSON 형태의 분석 결과만 반환합니다.
+    실패 시 None 반환
+    """
+    prompt_template = load_prompt("analysis.txt.txt")
     prompt = prompt_template.format(
         question=question.strip(),
         text=answer.strip(),
@@ -18,47 +16,27 @@ def analyze_answer(question: str, answer: str, jobtype: str, level: str, categor
         level=level,
         category=category
     )
+    try:
+        llm_response = call_llm(
+            prompt=prompt,
+            temperature=0.3,
+            max_tokens=512,
+            system_role="당신은 경험이 풍부한 면접관입니다. 지원자의 답변을 분석하고, 면접자의 입장에서 구체적인 피드백을 제공합니다."
+        )
+    except Exception as e:
+        print("❌ LLM 호출 실패:", e)
+        return None
 
-    response = client.chat.completions.create(
-        model=MODEL_NAME,
-        messages=[
-            {
-                "role": "system",
-                "content": "당신은 경험이 풍부한 면접관입니다. 지원자의 답변을 분석하고, 면접자의 입장에서 구체적인 피드백을 제공합니다."
-            },
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ]
-    )
-
-    full_response = response.choices[0].message.content.strip()
+    # JSON 추출 시도
+    full_response = llm_response.strip()
     json_match = re.search(r'\{[\s\S]*\}', full_response)
 
     if json_match:
         try:
-            analysis_result = json.loads(json_match.group(0))
-            return {
-                "code": 200,
-                "message": "분석 완료",
-                "data": analysis_result
-            }
+            return json.loads(json_match.group(0))
         except json.JSONDecodeError:
-            return {
-                "code": 500,
-                "message": "JSON 파싱 실패",
-                "data": {
-                    "error": "모델이 유효한 JSON을 생성하지 않았습니다.",
-                    "raw_output": full_response
-                }
-            }
+            print("❌ JSON 파싱 실패")
+            return None
 
-    return {
-        "code": 500,
-        "message": "JSON 응답 없음",
-        "data": {
-            "error": "모델 응답에서 JSON 데이터를 찾을 수 없습니다.",
-            "raw_output": full_response
-        }
-    }
+    print("❌ JSON 응답 없음")
+    return None
