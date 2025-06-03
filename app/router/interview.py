@@ -1,4 +1,5 @@
 from fastapi import APIRouter
+from typing import List
 from app.interview.answer_analyzer import analyze_answer
 from app.interview.question_generator import generate_question
 from app.schemas.interview import (

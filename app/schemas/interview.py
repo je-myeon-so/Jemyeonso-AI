@@ -34,7 +34,10 @@ class AnswerAnalysisItem(BaseModel):
     feedback: str
     suggestion: str
 
+class AnalyzeAnswerData(BaseModel):
+    analysis: List[AnswerAnalysisItem]
+
 class AnalyzeAnswerResponse(BaseModel):
     code: int
     message: str
-    data: List[AnswerAnalysisItem]
+    data: AnalyzeAnswerData

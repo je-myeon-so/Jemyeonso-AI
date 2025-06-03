@@ -8,7 +8,7 @@ def analyze_answer(question: str, answer: str, jobtype: str, level: str, categor
     면접 답변을 분석하여 JSON 형태의 분석 결과만 반환합니다.
     실패 시 None 반환
     """
-    prompt_template = load_prompt("analysis.txt.txt")
+    prompt_template = load_prompt("analysis.txt")
     prompt = prompt_template.format(
         question=question.strip(),
         text=answer.strip(),
