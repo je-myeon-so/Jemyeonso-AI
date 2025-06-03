@@ -1,5 +1,23 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
+
+# -------- 질문 생성 요청/응답 --------
+
+class GenerateQuestionRequest(BaseModel):
+    question_level: str
+    jobtype: str
+    question_category: str
+    previous_question: Optional[str] = None
+    previous_answer: Optional[str] = None
+
+class QuestionData(BaseModel):
+    question_type: str
+    question: str
+
+class GenerateQuestionResponse(BaseModel):
+    code: int
+    message: str
+    data: QuestionData
 
 # -------- 답변 분석 요청/응답 --------
 
@@ -19,31 +37,4 @@ class AnswerAnalysisItem(BaseModel):
 class AnalyzeAnswerResponse(BaseModel):
     code: int
     message: str
-    data: dict  # {"analysis.txt": [AnswerAnalysisItem]}
-
-# -------- 꼬리 질문 요청/응답 --------
-
-class FollowUpRequest(BaseModel):
-    question_category: str
-    question_level: str
-    jobtype: str
-    previousAnswer: str
-    previousQuestion: str
-
-class FollowUpResponse(BaseModel):
-    code: int
-    message: str
-    data: dict  # {"question_type": "꼬리질문", "question": "내용"}
-
-# -------- 질문 생성 요청/응답 --------
-
-class GenerateQuestionRequest(BaseModel):
-    question_level: str
-    jobtype: str
-    question_type: str
-    file_id: Optional[str] = None
-
-class GenerateQuestionResponse(BaseModel):
-    code: int
-    message: str
-    data: dict  # {"question": "내용"}
+    data: List[AnswerAnalysisItem]
