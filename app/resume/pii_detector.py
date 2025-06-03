@@ -1,6 +1,6 @@
 from transformers import pipeline
-from app.resume.regex_utils import detect_regex_pii
-from typing import Dict, List
+from app.core.regex_utils import detect_regex_pii
+from typing import Dict
 
 # 사람이 읽기 쉬운 라벨 매핑
 NER_LABEL_MAP = {
