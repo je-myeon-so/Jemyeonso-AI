@@ -1,6 +1,7 @@
-from fastapi import APIRouter, UploadFile, Form, File
+from fastapi import APIRouter, UploadFile, File
 from app.core.s3_utils import test_s3_connection, test_bucket_access, upload_file_to_s3
 from config import S3_BUCKET
+import os
 
 router = APIRouter(tags=["S3 버킷 연결"])
 @router.get("/s3/test-connection")
@@ -15,12 +16,12 @@ async def s3_connection_test():
 
 
 @router.post("/s3/upload")
-async def upload_file_to_s3_api(
-    file: UploadFile = File(...),
-    s3_key: str = Form(...)
-):
+async def upload_file_to_s3_api(file: UploadFile = File(...)):
     file_bytes = await file.read()
-    content_type = file.content_type  # 예: application/pdf, application/json
+    content_type = file.content_type  # 예: application/pdf
+
+    filename = os.path.basename(file.filename)  # 파일명 추출
+    s3_key = f"resumes/{filename}"  # 원하는 S3 object key
 
     success = upload_file_to_s3(
         file_bytes=file_bytes,
