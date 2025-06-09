@@ -21,7 +21,7 @@ async def upload_file_to_s3_api(file: UploadFile = File(...)):
     content_type = file.content_type  # 예: application/pdf
 
     filename = os.path.basename(file.filename)  # 파일명 추출
-    s3_key = f"resumes/{filename}"  # 원하는 S3 object key
+    s3_key = f"documents/resumes/{filename}"  # 원하는 S3 object key
 
     success = upload_file_to_s3(
         file_bytes=file_bytes,

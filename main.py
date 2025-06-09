@@ -11,7 +11,7 @@ app = FastAPI(
 app.include_router(interview.router, prefix="/api/ai")
 app.include_router(resume.router, prefix="/api/ai")
 app.include_router(s3_connection.router)
-app.include_router(pii_check.router)
+app.include_router(pii_check.router, prefix="/api/ai")
 app.include_router(health.router)
 
 if __name__ == "__main__":

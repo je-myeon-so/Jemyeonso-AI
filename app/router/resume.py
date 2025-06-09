@@ -14,7 +14,7 @@ from app.core.mysql_utils import update_redacted_resume_content
 router = APIRouter(tags=["이력서"])
 
 
-@router.post("/file/", response_model=ResumeParseResponse)
+@router.post("/file", response_model=ResumeParseResponse)
 async def process_resume(request: ResumeProcessRequest):
     """
     S3 URL로 업로드된 이력서를 불러와 텍스트를 추출하고,
