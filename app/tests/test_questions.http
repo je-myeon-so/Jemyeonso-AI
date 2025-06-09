@@ -2,34 +2,34 @@ POST http://localhost:8000/api/ai/questions
 Content-Type: application/json
 
 {
-  "question_category": "일반",
-  "question_level": "상",
-  "jobtype": "백엔드 개발자",
-  "previous_question": null,
-  "previous_answer": null,
-  "document_id": 999
+  "questionCategory": "일반",
+  "questionLevel": "상",
+  "jobType": "백엔드 개발자",
+  "previousQuestion": null,
+  "previousAnswer": null,
+  "documentId": 999
 }
 ###
 POST http://localhost:8000/api/ai/questions
 Content-Type: application/json
 
 {
-  "question_category": "압박",
-  "question_level": "중",
-  "jobtype": "프론트엔드 개발자",
-  "previous_question": "협업 과정에서 발생한 갈등을 어떻게 해결하셨나요?",
-  "previous_answer": "디자이너와의 의사소통 문제를 해결하기 위해 디자인 가이드를 만들고 정기 미팅을 도입했습니다.",
-  "document_id": 999
+  "questionCategory": "압박",
+  "questionLevel": "중",
+  "jobType": "프론트엔드 개발자",
+  "previousQuestion": "협업 과정에서 발생한 갈등을 어떻게 해결하셨나요?",
+  "previousAnswer": "디자이너와의 의사소통 문제를 해결하기 위해 디자인 가이드를 만들고 정기 미팅을 도입했습니다.",
+  "documentId": 999
 }
 ###
 POST http://localhost:8000/api/ai/questions
 Content-Type: application/json
 
 {
-  "question_category": "느슨",
-  "question_level": "하",
-  "jobtype": "AI 엔지니어",
-  "previous_question": "최근에 학습한 모델 중 가장 인상 깊었던 것은 무엇인가요?",
-  "previous_answer": "Gemma 모델을 사용해 보았는데 로컬에서 성능이 꽤 잘 나왔고, 메모리도 절약되어 좋았습니다.",
-  "document_id": 999
+  "questionCategory": "느슨",
+  "questionLevel": "하",
+  "jobType": "AI 엔지니어",
+  "previousQuestion": "최근에 학습한 모델 중 가장 인상 깊었던 것은 무엇인가요?",
+  "previousAnswer": "Gemma 모델을 사용해 보았는데 로컬에서 성능이 꽤 잘 나왔고, 메모리도 절약되어 좋았습니다.",
+  "documentId": 999
 }

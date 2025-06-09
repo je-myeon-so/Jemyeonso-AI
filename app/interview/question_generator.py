@@ -14,7 +14,7 @@ def decide_question_type(previous_question: Optional[str], previous_answer: Opti
 
 def fallback_question() -> QuestionData:
     return {
-        "question_type": "일반질문",
+        "questionType": "일반질문",
         "question": "이 직무에 지원하게 된 동기는 무엇인가요?"
     }
 
@@ -49,12 +49,12 @@ def generate_question(question_level: str, job_type: str, question_category: str
     try:
         response = call_llm(
             prompt,
-            temperature=0.6 if question_type == "일반질문" else 0.8,
+            temperature=0.8 if question_type == "일반질문" else 0.8,
             max_tokens=512
         )
 
         return {
-            "question_type": question_type,
+            "questionType": question_type,
             "question": response.strip() if isinstance(response, str) else str(response)
         }
 

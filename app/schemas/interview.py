@@ -4,15 +4,15 @@ from typing import Optional, List
 # -------- 질문 생성 요청/응답 --------
 
 class GenerateQuestionRequest(BaseModel):
-    question_level: str
-    jobtype: str
-    question_category: str
-    previous_question: Optional[str] = None
-    previous_answer: Optional[str] = None
-    document_id: Optional[int] = None
+    questionLevel: str
+    jobType: str
+    questionCategory: str
+    previousQuestion: Optional[str] = None
+    previousAnswer: Optional[str] = None
+    documentId: Optional[int] = None
 
 class QuestionData(BaseModel):
-    question_type: str
+    questionType: str
     question: str
 
 class GenerateQuestionResponse(BaseModel):
@@ -23,15 +23,15 @@ class GenerateQuestionResponse(BaseModel):
 # -------- 답변 분석 요청/응답 --------
 
 class AnalyzeAnswerRequest(BaseModel):
-    question_category: str
-    question_level: str
-    jobtype: str
+    questionCategory: str
+    questionLevel: str
+    jobType: str
     question: str
     answer: str
 
 class AnswerAnalysisItem(BaseModel):
-    error_text: str
-    error_type: str
+    errorText: str
+    errorType: str
     feedback: str
     suggestion: str
 

@@ -23,7 +23,7 @@ async def process_resume(request: ResumeProcessRequest):
 
     # 1. PDF 다운로드
     try:
-        pdf_response = requests.get(request.file_url)
+        pdf_response = requests.get(request.fileUrl)
         pdf_response.raise_for_status()
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"PDF 다운로드 실패: {str(e)}")
@@ -46,7 +46,7 @@ async def process_resume(request: ResumeProcessRequest):
 
     # 5. DB 업데이트
     success = update_redacted_resume_content(
-        document_id=request.document_id,
+        document_id=request.documentId,
         redacted_text=anonymized_text
     )
 
@@ -55,14 +55,14 @@ async def process_resume(request: ResumeProcessRequest):
 
     # 6. PII 로그 S3 업로드
     pii_payload = create_pii_log_payload(
-        user_id=request.user_id,
-        file_id=str(request.document_id),
-        original_filename=f"{request.document_id}.pdf",
+        user_id=request.userId,
+        file_id=str(request.documentId),
+        original_filename=f"{request.documentId}.pdf",
         regex_result=pii_result["regex_result"],
         ner_result=pii_result["ner_result"]
     )
     json_bytes = json.dumps(pii_payload, ensure_ascii=False).encode("utf-8")
-    object_key = f"pii-logs/{request.document_id}.json"
+    object_key = f"pii-logs/{request.documentId}.json"
 
     upload_file_to_s3(
         file_bytes=json_bytes,
