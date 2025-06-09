@@ -1,0 +1,43 @@
+POST http://localhost:8000/api/ai/answers/analyze
+Content-Type: application/json
+
+{
+  "question_category": "압박",
+  "question_level": "상",
+  "jobtype": "백엔드 엔지니어",
+  "question": "트래픽이 몰릴 때 시스템이 버티지 못하면 어떻게 대응하시겠습니까?",
+  "answer": "음... 사실 그 부분은 제가 직접적으로 맡았던 부분은 아니고요, 저희 팀의 다른 분이 했던 걸로 기억합니다. 하지만 음... 캐시를 좀 쓰면 괜찮지 않을까 싶고, 그... 오토스케일링 같은 것도 고려할 수 있지 않을까요?"
+}
+###
+POST http://localhost:8000/api/ai/answers/analyze
+Content-Type: application/json
+
+{
+  "question_category": "느슨",
+  "question_level": "중",
+  "jobtype": "데이터 분석가",
+  "question": "가장 기억에 남는 데이터 분석 프로젝트는 무엇인가요?",
+  "answer": "제가 대학원에서 진행했던 스마트시티 데이터 분석 프로젝트가 가장 기억에 남습니다. 해당 프로젝트에서는 교통량 데이터를 기반으로 도시 내 교통 흐름을 예측하고, 예측 결과를 시각화하여 정책 제안서로 정리했습니다. 그 과정에서 Python의 pandas, seaborn, 그리고 Prophet을 활용했고, 처음으로 time-series forecasting을 본격적으로 해본 경험이었습니다. 팀원들과 협업하며 주기적으로 코드 리뷰를 하고, 서로 피드백을 주고받은 것도 인상 깊었습니다."
+}
+###
+POST http://localhost:8000/api/ai/answers/analyze
+Content-Type: application/json
+
+{
+  "question_category": "압박",
+  "question_level": "하",
+  "jobtype": "프론트엔드 개발자",
+  "question": "CSS Flexbox와 Grid의 차이를 설명해보세요.",
+  "answer": "어... Flexbox는 일단 일차원이고, Grid는 이차원입니다. 그래서 Flexbox는 가로로 정렬하거나 세로로 정렬하는 데 쓰이고, Grid는 줄과 칸으로 나눌 수 있어요. 저도 프로젝트에서 둘 다 써봤는데... 그때는 그냥 느낌대로 골랐던 것 같고요. 어... 디자이너가 요구하는 걸 따라가면서 썼습니다."
+}
+###
+POST http://localhost:8000/api/ai/answers/analyze
+Content-Type: application/json
+
+{
+  "question_category": "느슨",
+  "question_level": "상",
+  "jobtype": "AI 리서처",
+  "question": "최근 논문 중 인상 깊었던 논문과 그 이유를 설명해주세요.",
+  "answer": "최근 읽은 논문 중에는 'Self-Instruct: Aligning Language Models with Self-Generated Instructions'가 가장 인상 깊었습니다. 이 논문은 기존 Supervised Fine-Tuning(SFT) 방식의 한계를 극복하고, 언어 모델이 자체적으로 Instruction 데이터를 생성하여 학습하는 방법을 제안합니다. 특히 GPT 계열 모델을 사용해 Synthetic Data를 생성하고, 그것을 다시 모델이 학습하는 방식은 비용 측면에서도 상당히 효율적이었습니다. 이 논문에서 얻은 인사이트는 이후 제가 진행한 few-shot tuning 실험에도 직접적으로 반영됐습니다."
+}
