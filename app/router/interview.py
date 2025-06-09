@@ -13,12 +13,12 @@ router = APIRouter(tags=["인터뷰"])
 def generate_question_endpoint(request: GenerateQuestionRequest):
     try:
         result = generate_question(
-            job_type=request.jobtype,
-            question_level=request.question_level,
-            question_category=request.question_category,
-            previous_question=request.previous_question,
-            previous_answer=request.previous_answer,
-            document_id = request.document_id
+            job_type=request.jobType,
+            question_level=request.questionLevel,
+            question_category=request.questionCategory,
+            previous_question=request.previousQuestion,
+            previous_answer=request.previousAnswer,
+            document_id = request.documentId
         )
         return {
             "code": 200,
@@ -39,9 +39,9 @@ def analyze(request: AnalyzeAnswerRequest):
     result = analyze_answer(
         question=request.question,
         answer=request.answer,
-        jobtype=request.jobtype,
-        level=request.question_level,
-        category=request.question_category
+        jobtype=request.jobType,
+        level=request.questionLevel,
+        category=request.questionCategory
     )
     return {
         "code": 200,
