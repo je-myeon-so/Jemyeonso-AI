@@ -4,21 +4,41 @@ from app.schemas.interview import QuestionData
 from app.interview.prompt_loader import load_prompt
 from app.core.llm_utils import call_llm
 from app.core.mysql_utils import get_resume_text
+from app.core.question_cache import question_cache
 
 QuestionType = Literal["일반질문", "꼬리질문"]
 
 def decide_question_type(previous_question: Optional[str], previous_answer: Optional[str]) -> QuestionType:
+    """질문 타입 결정 (일반질문 vs 꼬리질문)"""
     if previous_question is None and previous_answer is None:
         return "일반질문"
     return random.choice(["일반질문", "꼬리질문"])  # TODO: semantic decision later
 
 def fallback_question() -> QuestionData:
+    """질문 생성 실패 시 대체 질문 반환"""
     return {
         "questionType": "일반질문",
         "question": "이 직무에 지원하게 된 동기는 무엇인가요?"
     }
 
-def generate_question(question_level: str, job_type: str, question_category: str, previous_question: Optional[str], previous_answer: Optional[str], document_id: Optional[str]) -> QuestionData:
+def generate_questions(previous_questions: list[str]) -> str:
+    """이전 질문들을 프롬프트에 포함할 형식으로 변환"""
+    if not previous_questions:
+        return ""
+    
+    questions_text = "\n".join([f"- {q}" for q in previous_questions])
+    return f"""
+**이전에 생성된 질문들 (중복 금지):**
+{questions_text}
+
+위 질문들과 겹치지 않는 새로운 관점의 질문을 생성하세요.
+"""
+
+def generate_question(question_level: str, job_type: str, question_category: str, 
+                     previous_question: Optional[str], previous_answer: Optional[str], 
+                     document_id: Optional[str]) -> QuestionData:
+    """면접 질문 생성 (중복 방지 로직 포함)"""
+    
     question_type = decide_question_type(previous_question, previous_answer)
     prompt_file = "question.txt" if question_type == "일반질문" else "follow_up.txt"
     prompt_template = load_prompt(prompt_file)
@@ -26,15 +46,28 @@ def generate_question(question_level: str, job_type: str, question_category: str
     if question_type == "일반질문":
         if not document_id:
             raise ValueError("일반질문 생성을 위해 document_id가 필요합니다.")
+        
+        # 중복 방지: 이전 질문들 조회
+        previous_questions = question_cache.get_previous_questions(
+            document_id, job_type, question_category, question_level
+        )
+        
+        # 이력서 내용 조회
         resume_text = get_resume_text(document_id)
         if not resume_text:
             raise ValueError("이력서 내용을 찾을 수 없습니다.")
+        
+        # 이전 질문들을 프롬프트에 포함
+        previous_questions_section = generate_questions(previous_questions)
+        
+        # 프롬프트 구성
         prompt = prompt_template.format(
             resume_text=resume_text,
             question_level=question_level,
             job_type=job_type,
             question_category=question_category,
-            question_type=question_type
+            question_type=question_type,
+            previous_questions_section=previous_questions_section
         )
     else:
         prompt = prompt_template.format(
@@ -52,7 +85,15 @@ def generate_question(question_level: str, job_type: str, question_category: str
             temperature=0.8 if question_type == "일반질문" else 0.8,
             max_tokens=512
         )
-
+        
+        generated_question = response.strip() if isinstance(response, str) else str(response)
+        
+        # 캐시에 새 질문 저장 (일반질문만)
+        if question_type == "일반질문" and document_id:
+            question_cache.add_question(
+                document_id, job_type, question_category, question_level, generated_question
+            )
+        
         return {
             "questionType": question_type,
             "question": response.strip() if isinstance(response, str) else str(response)
