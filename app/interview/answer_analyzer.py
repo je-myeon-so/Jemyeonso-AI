@@ -1,6 +1,5 @@
 import json
 import re
-import ast
 from app.interview.prompt_loader import load_prompt
 from app.core.llm_utils import call_llm
 from app.core.wikipedia_service import WikipediaService
@@ -15,7 +14,7 @@ def extract_technical_concepts(answer: str, jobtype: str) -> list:
         prompt = prompt_template.format(answer=answer, job_type=jobtype)
     except FileNotFoundError:
         return []
-    except Exception:
+    except (AttributeError, KeyError, TypeError):
         return []
 
     try:
@@ -25,9 +24,10 @@ def extract_technical_concepts(answer: str, jobtype: str) -> list:
             max_tokens=200,
             system_role="당신은 기술 면접 전문가입니다. 답변에서 검증 가능한 기술 개념을 정확히 추출합니다."
         )
-        concepts = ast.literal_eval(response.strip())
+        # Safely parse JSON response instead of using ast.literal_eval
+        concepts = json.loads(response.strip())
         return concepts if isinstance(concepts, list) else []
-    except:
+    except (json.JSONDecodeError, ValueError, TypeError):
         return []
 
 
@@ -72,7 +72,7 @@ def analyze_answer(question: str, answer: str, jobtype: str, level: str, categor
             max_tokens=512,
             system_role="당신은 경험이 풍부한 면접관입니다. 지원자의 답변을 분석하고, 면접자의 입장에서 구체적인 피드백을 제공합니다."
         )
-    except Exception as e:
+    except (ConnectionError, TimeoutError, ValueError) as e:
         print("❌ LLM 호출 실패:", e)
         return None
 
