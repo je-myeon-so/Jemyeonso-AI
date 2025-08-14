@@ -1,4 +1,4 @@
-from config import URL
+from app.config import URL
 from urllib.parse import urlparse
 from mysql.connector import pooling, Error
 
