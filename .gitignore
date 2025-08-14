@@ -40,3 +40,6 @@ build/
 # FastAPI + Uvicorn pid/log 관련 (선택적)
 *.pid
 *.db
+
+# Prompts (sensitive content)
+app/prompts/
