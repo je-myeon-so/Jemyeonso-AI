@@ -22,7 +22,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Jemyeonso API",
     description="이력서 기반 면접 준비 시스템",
-    version="1.0.0",
+    version="1.5.0",
     lifespan=lifespan
 )
 

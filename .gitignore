@@ -42,4 +42,4 @@ build/
 *.db
 
 # Prompts (sensitive content)
-app/prompts/
+app/prompts
