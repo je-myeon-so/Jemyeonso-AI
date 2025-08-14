@@ -1,14 +1,17 @@
 import requests
+import urllib.parse
 from typing import Optional, Dict
+
 
 class WikipediaService:
     def __init__(self):
         self.base_url = "https://ko.wikipedia.org/api/rest_v1/page/summary"
         self.search_url = "https://ko.wikipedia.org/w/api.php"
-    
+
     def get_concept_summary(self, concept: str) -> Optional[Dict]:
         try:
-            response = requests.get(f"{self.base_url}/{concept}", timeout=5)
+            encoded_concept = urllib.parse.quote(concept, safe='')
+            response = requests.get(f"{self.base_url}/{encoded_concept}", timeout=5)
             if response.status_code == 200:
                 data = response.json()
                 return {
@@ -18,12 +21,12 @@ class WikipediaService:
                 }
         except:
             return None
-    
+
     def search_concept(self, query: str) -> Optional[str]:
         try:
             params = {
                 "action": "query",
-                "list": "search", 
+                "list": "search",
                 "srsearch": query,
                 "format": "json",
                 "srlimit": 1
