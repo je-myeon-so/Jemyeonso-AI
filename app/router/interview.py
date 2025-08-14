@@ -44,6 +44,14 @@ def analyze(request: AnalyzeAnswerRequest):
         level=request.questionLevel,
         category=request.questionCategory
     )
+    
+    if result is None or not result.get("analysis"):
+        return {
+            "code": 200,
+            "message": "분석이 완료되었습니다. 답변에서 특별히 개선할 점을 찾지 못했습니다. 좋은 답변이었습니다!",
+            "data": {"analysis": []}
+        }
+    
     return {
         "code": 200,
         "message": "대답 분석을 성공하였습니다",
