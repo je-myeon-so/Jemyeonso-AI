@@ -1,6 +1,6 @@
 from fastapi import APIRouter, UploadFile, File
 from app.core.s3_utils import test_s3_connection, test_bucket_access, upload_file_to_s3
-from config import S3_BUCKET
+from app.config import S3_BUCKET
 import os
 
 router = APIRouter(tags=["S3 버킷 연결"])
