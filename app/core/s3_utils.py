@@ -1,6 +1,6 @@
 import mimetypes
 import boto3
-from config import REGION, ACCESS_KEY, SECRET_KEY, S3_BUCKET
+from app.config import REGION, ACCESS_KEY, SECRET_KEY, S3_BUCKET
 
 s3 = boto3.client(
     "s3",
