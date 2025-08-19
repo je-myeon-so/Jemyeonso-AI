@@ -5,7 +5,7 @@ COPY . /fastapi
 
 WORKDIR /fastapi
 
-RUN pip install --no-cache-dir -r ./requirements.txt
+RUN pip install pip==24.2 && pip install --no-cache-dir -r ./requirements.txt
 
 EXPOSE 8000
 
