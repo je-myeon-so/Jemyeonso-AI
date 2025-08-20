@@ -283,8 +283,8 @@ class TestIntegrationWithWikipedia:
     """Integration tests combining multiple services including Wikipedia"""
 
     @pytest.mark.integration
-    @patch('app.core.wikipedia_service.WikipediaService')
-    @patch('app.core.llm_utils.call_llm')
+    @patch('app.interview.answer_analyzer.WikipediaService')
+    @patch('app.interview.answer_analyzer.call_llm')
     def test_complete_analysis_flow_with_wikipedia(self, mock_call_llm, mock_wiki_service):
         """Test complete answer analysis flow including Wikipedia integration"""
         from app.interview.answer_analyzer import analyze_answer
@@ -301,13 +301,20 @@ class TestIntegrationWithWikipedia:
         # Mock LLM responses
         mock_call_llm.side_effect = [
             '["Python", "Django"]',  # Concept extraction
-            '{"score": 85, "feedback": "Good answer with Wikipedia context"}'  # Analysis
+            json.dumps({  # Analysis - must have "analysis" key
+                "analysis": [{
+                    "errorText": "Python is a great language for web development",
+                    "errorType": "전문성 우수", 
+                    "feedback": "Good answer with Wikipedia context",
+                    "suggestion": "Add more examples"
+                }]
+            })
         ]
         
         with patch('app.interview.answer_analyzer.load_prompt') as mock_load_prompt:
             mock_load_prompt.side_effect = [
-                "Extract: {answer}",
-                "Analyze: {question}"
+                "Extract: {answer} for {job_type}",  # Concept extraction prompt
+                "Analyze: {question} {text} {jobtype} {level} {category}"  # Analysis prompt
             ]
             
             result = analyze_answer(
@@ -318,7 +325,13 @@ class TestIntegrationWithWikipedia:
                 "Technical"
             )
             
+            # The function should return a proper result with analysis
             assert result is not None
-            assert result["score"] == 85
+            assert result.get("analysis") is not None
+            assert len(result["analysis"]) > 0
+            
             # Verify Wikipedia service was called
-            mock_service.get_concept_summary.assert_called()
+            assert mock_wiki_service.called
+            
+            # Verify LLM was called for both concept extraction and analysis
+            assert mock_call_llm.call_count == 2

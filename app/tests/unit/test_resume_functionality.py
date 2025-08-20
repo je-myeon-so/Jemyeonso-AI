@@ -78,17 +78,17 @@ class TestPIIDetection:
     def test_detect_email_pii(self):
         """Test email PII detection"""
         try:
-            from app.resume.pii_detector import detect_pii, PIIType
+            from app.resume.pii_detector import detect_pii
             
             text = "Contact me at john.doe@example.com for more information"
             pii_items = detect_pii(text)
             
-            email_items = [item for item in pii_items if item.type == PIIType.EMAIL]
-            assert len(email_items) > 0
-            assert "john.doe@example.com" in email_items[0].value
+            # Should detect email via regex (works even if NER model failed to load)
+            assert "email" in pii_items["detected_pii_fields"]
+            assert "john.doe@example.com" in str(pii_items["regex_result"])
             
-        except ImportError:
-            pytest.skip("pii_detector module not available")
+        except ImportError as e:
+            pytest.skip(f"pii_detector module not available: {e}")
 
     @pytest.mark.unit
     def test_detect_phone_pii(self):

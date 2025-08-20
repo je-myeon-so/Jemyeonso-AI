@@ -1,20 +1,29 @@
 from transformers import pipeline
 from app.core.regex_utils import detect_regex_pii
 from typing import Dict
+import logging
 
-# 사람이 읽기 쉬운 라벨 매핑
 NER_LABEL_MAP = {
     "PER": "name",
-    "LOC": "location",
+    "LOC": "location", 
     "ORG": "organization",
     "MISC": "misc"
 }
 
-# NER 파이프라인 초기화
-ner = pipeline("ner", model="FacebookAI/xlm-roberta-large-finetuned-conll03-english", aggregation_strategy="simple")
+try:
+    print("📦 Loading NER model for PII detection...")
+    ner = pipeline("ner", model="FacebookAI/xlm-roberta-large-finetuned-conll03-english", aggregation_strategy="simple")
+    print("✅ NER model loaded successfully")
+except Exception as e:
+    print(f"❌ Failed to load NER model: {e}")
+    ner = None
 
 def detect_pii(text: str, debug: bool = False) -> Dict:
-    ner_entities = ner(text)
+    if ner is None:
+        print("⚠️ NER model not available, using regex-only PII detection")
+        ner_entities = []
+    else:
+        ner_entities = ner(text)
     regex_result = detect_regex_pii(text)
 
     ner_result = {}
@@ -35,18 +44,15 @@ def detect_pii(text: str, debug: bool = False) -> Dict:
 
     masked_text = text
 
-    # Regex 기반 마스킹
     for label, matches in regex_result.items():
         for match in set(matches):
             match_str = "".join(match) if isinstance(match, tuple) else match
             masked_text = masked_text.replace(match_str, f"[REDACTED_{label.upper()}]")
 
-    # NER 기반 마스킹
     for label, words in ner_result.items():
         for word in sorted(set(words), key=len, reverse=True):
             masked_text = masked_text.replace(word, f"[REDACTED_{label.upper()}]")
 
-    # 최종적으로 감지된 PII 종류 (NER + Regex 통합)
     detected_labels = set(regex_result.keys()) | set(ner_result.keys())
 
     return {
