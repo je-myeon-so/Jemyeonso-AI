@@ -24,10 +24,9 @@ def extract_technical_concepts(answer: str, jobtype: str) -> list:
             max_tokens=200,
             system_role="당신은 기술 면접 전문가입니다. 답변에서 검증 가능한 기술 개념을 정확히 추출합니다."
         )
-        # Safely parse JSON response instead of using ast.literal_eval
         concepts = json.loads(response.strip())
         return concepts if isinstance(concepts, list) else []
-    except (json.JSONDecodeError, ValueError, TypeError):
+    except (json.JSONDecodeError, ValueError, TypeError, Exception):
         return []
 
 
@@ -76,7 +75,6 @@ def analyze_answer(question: str, answer: str, jobtype: str, level: str, categor
         print("❌ LLM 호출 실패:", e)
         return None
 
-    # JSON 추출 시도
     full_response = llm_response.strip()
     json_match = re.search(r'\{[\s\S]*\}', full_response)
 
