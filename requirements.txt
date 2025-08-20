@@ -54,3 +54,12 @@ typing-inspection==0.4.1
 typing_extensions==4.13.2
 urllib3==1.26.20
 uvicorn==0.34.2
+#testing dependencies
+pytest==8.3.3
+pytest-asyncio==0.25.0
+pytest-cov==6.0.0
+pytest-mock==3.14.0
+httpx==0.28.1
+fastapi[testing]==0.115.12
+responses==0.25.3
+faker==30.8.2
