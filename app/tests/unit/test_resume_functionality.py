@@ -55,6 +55,21 @@ class TestResumeParser:
         except ImportError:
             pytest.skip("resume.parser module not available")
 
+    @pytest.mark.unit
+    def test_parse_text_resume(self):
+        """Test text resume parsing"""
+        try:
+            from app.resume.parser import extract_text_from_txt
+
+            text_content = "Name: Jane Smith\nExperience: 5 years Python development"
+            result = extract_text_from_txt(text_content.encode())
+
+            assert "Jane Smith" in result
+            assert "Python development" in result
+
+        except ImportError:
+            pytest.skip("resume.parser text extraction not available")
+
 
 class TestPIIDetection:
     """Test cases for PII (Personally Identifiable Information) detection"""
@@ -79,16 +94,18 @@ class TestPIIDetection:
     def test_detect_phone_pii(self):
         """Test phone number PII detection"""
         try:
-            from app.resume.pii_detector import detect_pii
-            
+            from app.resume.pii_detector import detect_pii, PIIType
+
             text = "Call me at 010-1234-5678 or 02-987-6543"
             pii_items = detect_pii(text)
             
+            phone_items = [item for item in pii_items if item.type == PIIType.PHONE]
+            assert len(phone_items) >= 1
             # Check if phone numbers are detected in the results
-            phone_detected = ("phone" in pii_items["detected_pii_fields"] or 
+            phone_detected = ("phone" in pii_items["detected_pii_fields"] or
                             any("010-1234-5678" in str(result) for result in pii_items.values()))
             assert phone_detected
-            
+
         except ImportError:
             pytest.skip("pii_detector module not available")
 
@@ -96,17 +113,19 @@ class TestPIIDetection:
     def test_detect_name_pii(self):
         """Test name PII detection"""
         try:
-            from app.resume.pii_detector import detect_pii
-            
+            from app.resume.pii_detector import detect_pii, PIIType
+
             text = "My name is 김철수 and I am a software engineer"
             pii_items = detect_pii(text)
             
+            name_items = [item for item in pii_items if item.type == PIIType.NAME]
             # Name detection might be complex, so we just check it doesn't crash
+            assert isinstance(name_items, list)
             # and returns the expected structure
             assert isinstance(pii_items, dict)
             assert "detected_pii_fields" in pii_items
             assert isinstance(pii_items["detected_pii_fields"], list)
-            
+
         except ImportError:
             pytest.skip("pii_detector module not available")
 
@@ -124,12 +143,13 @@ class TestPIIDetection:
             """
             
             pii_items = detect_pii(text)
-            
+            assert len(pii_items) >= 2  # At least email and phone
+
             # Should detect at least email and phone via regex
             detected_fields = pii_items.get("detected_pii_fields", [])
             assert len(detected_fields) >= 1  # At least something should be detected
             assert isinstance(detected_fields, list)
-            
+
         except ImportError:
             pytest.skip("pii_detector module not available")
 
