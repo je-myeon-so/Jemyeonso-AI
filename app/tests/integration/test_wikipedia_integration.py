@@ -2,7 +2,6 @@
 Comprehensive integration tests for Wikipedia API functionality
 """
 import pytest
-import json
 from unittest.mock import patch, Mock
 from fastapi.testclient import TestClient
 from app.main import app
@@ -56,14 +55,7 @@ class TestWikipediaIntegrationFlow:
         
         mock_call_llm.side_effect = [
             '["Python", "Django", "REST API"]',  # Concept extraction response
-            json.dumps({  # Analysis response - must have "analysis" key for the router
-                "analysis": [{
-                    "errorText": "Python은 읽기 쉬운 문법을 가진 고수준 프로그래밍 언어입니다.",
-                    "errorType": "전문성 우수",
-                    "feedback": "Python, Django, REST API에 대한 정확한 이해를 보여주었습니다.",
-                    "suggestion": "실제 프로젝트 경험 사례를 추가하면 더 좋겠습니다."
-                }]
-            })
+            '{"analysis": [{"errorText": "Python은 읽기 쉬운 문법을 가진 고수준 프로그래밍 언어입니다.", "errorType": "전문성 우수", "feedback": "Python, Django, REST API에 대한 정확한 이해를 보여주었습니다.", "suggestion": "실제 프로젝트 경험 사례를 추가하면 더 좋겠습니다."}]}'  # Raw JSON string as LLM would return
         ]
         
         # Make API request
@@ -129,14 +121,7 @@ class TestWikipediaIntegrationFlow:
         
         mock_call_llm.side_effect = [
             '["ML", "TensorFlow"]',  # Concept extraction with abbreviation
-            json.dumps({
-                "analysis": [{
-                    "errorText": "ML은 데이터 분석 방법 중 하나입니다.",
-                    "errorType": "전문성 양호",
-                    "feedback": "ML에 대한 기초 이해도가 좋습니다.",
-                    "suggestion": "구체적인 예시를 추가하면 더 좋겠습니다."
-                }]
-            })
+            '{"analysis": [{"errorText": "ML은 데이터 분석 방법 중 하나입니다.", "errorType": "전문성 양호", "feedback": "ML에 대한 기초 이해도가 좋습니다.", "suggestion": "구체적인 예시를 추가하면 더 좋겠습니다."}]}'
         ]
         
         request_data = {
@@ -188,14 +173,7 @@ class TestWikipediaIntegrationFlow:
             
             mock_call_llm.side_effect = [
                 '["UnknownTech", "FutureTech"]',  # Non-existent concepts
-                json.dumps({
-                    "analysis": [{
-                        "errorText": "UnknownTech와 FutureTech가 미래를 바꿀 것입니다.",
-                        "errorType": "전문성 부족",
-                        "feedback": "언급한 기술들에 대한 검증이 어려웠습니다.",
-                        "suggestion": "알려진 기술 스택을 활용하는 것을 권장합니다."
-                    }]
-                })
+                '{"analysis": [{"errorText": "UnknownTech와 FutureTech가 미래를 바꿀 것입니다.", "errorType": "전문성 부족", "feedback": "언급한 기술들에 대한 검증이 어려웠습니다.", "suggestion": "알려진 기술 스택을 활용하는 것을 권장합니다."}]}'
             ]
             
             request_data = {

@@ -57,13 +57,14 @@ def analyze_answer(question: str, answer: str, jobtype: str, level: str, categor
     wikipedia_context = get_wikipedia_context(technical_concepts)
 
     prompt_template = load_prompt("analysis.txt")
-    prompt = prompt_template.format(
+    formatted_prompt = prompt_template.format(
         question=question.strip(),
         text=answer.strip(),
         jobtype=jobtype,
         level=level,
         category=category
-    ) + wikipedia_context
+    )
+    prompt = formatted_prompt + wikipedia_context
     try:
         llm_response = call_llm(
             prompt=prompt,
