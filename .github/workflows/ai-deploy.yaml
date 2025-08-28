@@ -1,0 +1,74 @@
+name: Deploy FastAPI (via SSH)
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'ECR 이미지 태그'
+        required: true
+
+env:
+  AWS_REGION: ap-northeast-2
+  ECR_BASE: ${{ secrets.ECR_BASE }}
+  ECR_REPO: ${{ secrets.ECR_REPO }}
+  IMAGE_TAG: ${{ github.event.inputs.image_tag || github.sha }}
+  SSH_KEY_PATH: sophie-keypair.pem
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        run: |
+          aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.ECR_BASE }}
+
+      - name: Build Docker image (tagged with $IMAGE_TAG and latest)
+        run: |
+          docker build -t $ECR_BASE/$ECR_REPO:$IMAGE_TAG .
+          docker tag $ECR_BASE/$ECR_REPO:$IMAGE_TAG $ECR_BASE/$ECR_REPO:fastapi-latest
+
+      - name: Push Docker image to ECR (both tags)
+        run: |
+          docker push $ECR_BASE/$ECR_REPO:$IMAGE_TAG
+          docker push $ECR_BASE/$ECR_REPO:fastapi-latest
+
+      - name: Save SSH Key
+        run: |
+          echo "${{ secrets.EC2_KEY }}" > $SSH_KEY_PATH
+          chmod 600 $SSH_KEY_PATH
+
+      - name: SSH to OpenVPN and deploy FastAPI
+        run: |
+          ssh -i $SSH_KEY_PATH -o StrictHostKeyChecking=no openvpnas@${{ secrets.OPENVPN_HOST }} << EOF
+            ssh -i $SSH_KEY_PATH -o StrictHostKeyChecking=no ubuntu@${{ secrets.WEB_PRIVATE_IP }} '
+              export AWS_REGION=${{ env.AWS_REGION }}
+              export ECR_BASE=${{ env.ECR_BASE }}
+              export ECR_REPO=${{ env.ECR_REPO }}
+              export IMAGE_TAG=${{ env.IMAGE_TAG }}
+              export FULL_IMAGE="$ECR_BASE/$ECR_REPO:fastapi-latest"
+
+              echo "[INFO] Logging in to ECR..."
+              aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_BASE
+
+              echo "[INFO] Pulling image: \$FULL_IMAGE"
+              docker pull \$FULL_IMAGE
+
+              echo "[INFO] Running deploy script..."
+              bash /home/ubuntu/deploy/scripts/deploy.sh
+            '
+          EOF
+
