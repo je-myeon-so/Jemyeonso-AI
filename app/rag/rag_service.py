@@ -3,136 +3,151 @@ from __future__ import annotations
 import os
 import logging
 from typing import List, Optional
+import requests
+from bs4 import BeautifulSoup
 
-from app.config import OPENAI_API_KEY, MODEL_NAME
-
-# LangChain 구성 요소 임포트
 from langchain_community.vectorstores import Chroma
 from langchain_core.documents import Document
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import Runnable, RunnablePassthrough
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 
-# --- 로거 설정 ---
-# 애플리케이션 전반의 로깅 설정을 위해 기본 로거를 사용합니다.
-# 실제 프로덕션 환경에서는 main.py 등에서 포맷과 레벨을 중앙 관리하는 것이 좋습니다.
+# HuggingFace 임베딩 관련
+from sentence_transformers import SentenceTransformer
+from langchain_community.embeddings import HuggingFaceEmbeddings
+
+from app.interview.prompt_loader import load_prompt
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+CULTURE_URLS = [
+    {
+        "company": "당근마켓",
+        "url": "https://medium.com/daangn/%EB%8B%B9%EA%B7%BC%EB%A7%88%EC%BC%93-it-%EA%B0%9C%EB%B0%9C-%ED%98%91%EC%97%85-%EC%9D%B4%EC%95%BC%EA%B8%B0-%EA%B0%9C%EB%B0%9C%EC%9E%90-%EB%94%94%EC%9E%90%EC%9D%B4%EB%84%88-pm-fff69de54015"
+    },
+    {
+        "company": "우아한형제들(배달의민족)",
+        "url": "https://techblog.woowahan.com/14671/"
+    },
+    {
+        "company": "우아한형제들(배달의민족)",
+        "url": "https://techblog.woowahan.com/9059/"
+    },
+    {
+        "company": "토스",
+        "url": "https://toss.im/career/article/culture-evangelist-session?utm_source=toss_careerpage&utm_medium=banner&utm_campaign=2311_cemeetup"
+    },
+]
+
+def _scrape_text_from_url(url: str) -> str:
+    try:
+        resp = requests.get(url, timeout=10)
+        resp.raise_for_status()
+        soup = BeautifulSoup(resp.text, "html.parser")
+        # 주요 본문 추출 
+        # 우선 article/main/body에서 p 태그 텍스트를 모두 합침
+        candidates = soup.find_all(['article', 'main', 'body'])
+        text = ""
+        for c in candidates:
+            ps = c.find_all('p')
+            text += "\n".join([p.get_text(strip=True) for p in ps])
+        if not text:
+            # fallback: 모든 p 태그
+            text = "\n".join([p.get_text(strip=True) for p in soup.find_all('p')])
+        return text.strip()
+    except Exception as e:
+        logger.error(f"[스크래핑 실패] {url}: {e}")
+        return ""
 
 def _format_docs(documents: List[Document]) -> str:
-    """
-    Retrieved 문서 리스트를 하나의 컨텍스트 문자열로 포맷팅합니다.
-    
-    """
     contents = [doc.page_content for doc in documents if doc.page_content]
     return "\n\n".join(contents)
 
-
 class RagService:
     """
-    CultureFit 질문 생성 대상 RAG 파이프라인을 관리하는 싱글톤 서비스 클래스.
-
+    HuggingFace 임베딩 기반 RAG 파이프라인 (임시 Chroma DB)
     """
-    DEFAULT_PERSIST_DIR: str = "./chroma_db"
+    TEMP_DB_DIR: str = "./chroma_db_temp"
+    EMBED_MODEL_NAME: str = "intfloat/multilingual-e5-small"
 
     def __init__(self) -> None:
-        """RagService의 속성을 초기화합니다."""
-        self.embedding_model: Optional[OpenAIEmbeddings] = None
+        self.embedding_model: Optional[HuggingFaceEmbeddings] = None
         self.vector_store: Optional[Chroma] = None
-        self.llm: Optional[ChatOpenAI] = None
         self.chain: Optional[Runnable] = None
         self.is_initialized: bool = False
 
     def initialize(self) -> None:
-        """
-        RAG 파이프라인에 필요한 모든 구성 요소를 초기화하고 체인을 구성합니다.
-        이 메서드는 애플리케이션 시작 시(lifespan) 단 한 번만 호출되어야 합니다.
-        """
         if self.is_initialized:
             logger.info("RagService is already initialized. Skipping re-initialization.")
             return
-
-        logger.info("Initializing RagService...")
+        logger.info("Initializing RagService with HuggingFace embedding and temp Chroma DB...")
         try:
-            # 1. OpenAI 임베딩 모델 초기화
-            self.embedding_model = OpenAIEmbeddings(
-                api_key=OPENAI_API_KEY,
-                model=os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-large"),
+            # 1. HuggingFace 임베딩 모델 로드
+            model = SentenceTransformer(self.EMBED_MODEL_NAME)
+            self.embedding_model = HuggingFaceEmbeddings(model_name=self.EMBED_MODEL_NAME, model_kwargs={"device": "cpu"})
+
+            # 2. 각 URL에서 본문 텍스트 스크래핑
+            docs = []
+            for entry in CULTURE_URLS:
+                text = _scrape_text_from_url(entry["url"])
+                if text:
+                    docs.append(Document(page_content=text, metadata={"company": entry["company"], "url": entry["url"]}))
+                else:
+                    logger.warning(f"[본문 없음] {entry['company']} {entry['url']}")
+
+            # 3. Chroma DB 임시 디렉토리 생성 및 벡터화
+            if os.path.exists(self.TEMP_DB_DIR):
+                import shutil
+                shutil.rmtree(self.TEMP_DB_DIR)
+            os.makedirs(self.TEMP_DB_DIR, exist_ok=True)
+            self.vector_store = Chroma.from_documents(
+                documents=docs,
+                embedding=self.embedding_model,
+                persist_directory=self.TEMP_DB_DIR
             )
 
-            # 2. Chroma Vector DB 로드
-            persist_directory = os.getenv("CHROMA_PERSIST_DIR", self.DEFAULT_PERSIST_DIR)
-            if not os.path.isdir(persist_directory):
-                raise FileNotFoundError(
-                    f"Chroma DB directory not found at '{persist_directory}'. "
-                    "Please run 'scripts/build_vector_db.py' first."
-                )
-            
-            self.vector_store = Chroma(
-                persist_directory=persist_directory,
-                embedding_function=self.embedding_model,
-            )
-
-            # 3. Retriever 생성 (상위 3개 문서 검색)
+            # 4. Retriever 생성 (상위 3개 문서)
             retriever = self.vector_store.as_retriever(search_kwargs={"k": 3})
 
-            # 4. ChatOpenAI LLM 초기화
-            self.llm = ChatOpenAI(
-                api_key=OPENAI_API_KEY,
-                model=MODEL_NAME,
-                temperature=0.3,
-            )
-
-            # 5. 프롬프트 템플릿 정의
-            template = """당신은 지원자의 이력서와 회사의 문화 정보를 바탕으로, Culture Fit 면접 질문을 만드는 전문 면접관입니다.
-제시된 '회사의 문화 정보'를 반드시 활용하여, 지원자의 경험이 해당 문화에 어떻게 적응할 수 있을지 연결 짓는 질문을 생성해야 합니다.
-
-[회사의 문화 정보]
-{context}
-
-[지원자 이력서 내용]
-{resume_text}
-
-[질문]
-위 정보를 바탕으로, 지원자의 경험과 회사 문화의 연관성을 파고드는 날카로운 질문 하나만 생성해주세요."""
+            # 5. 프롬프트 S3/로컬에서 동적 로드
+            try:
+                template = load_prompt("culturefit.txt")
+            except Exception as e:
+                logger.error(f"Failed to load culturefit prompt: {e}")
+                raise
             prompt = ChatPromptTemplate.from_template(template)
 
-            # 6. LCEL을 사용한 RAG 체인 구성
+            def dummy_llm(inputs: dict) -> str:
+                return f"[프롬프트] {inputs}"
+
             self.chain = (
                 {
                     "context": retriever | _format_docs,
                     "resume_text": RunnablePassthrough(),
                 }
                 | prompt
-                | self.llm
+                | dummy_llm
                 | StrOutputParser()
             )
 
             self.is_initialized = True
             logger.info("RagService initialized successfully.")
-
         except Exception as e:
             logger.error(f"Failed to initialize RagService: {e}", exc_info=True)
-            # 초기화 실패 시 애플리케이션이 시작되지 않도록 예외를 다시 발생시킵니다.
             raise
 
-    def generate_culture_fit_question(self, resume_text: str) -> str:
+    def get_culturefit_context(self, resume_text: str) -> str:
         """
-        초기화된 RAG 체인을 사용하여 Culture Fit 질문을 생성합니다.
-
+        이력서 텍스트를 임베딩하여 Chroma DB에서 가장 유사한 회사 문화 context를 반환
         """
-        if not self.is_initialized or not self.chain:
-            raise RuntimeError(
-                "RagService is not initialized. Call the 'initialize()' method at application startup."
-            )
-        
-        logger.info("Generating culture fit question...")
-        # 체인의 입력 타입은 'resume_text' 문자열 하나입니다.
-        result = self.chain.invoke(resume_text)
-        return result.strip()
+        if not self.is_initialized:
+            raise RuntimeError("RagService is not initialized. Call the 'initialize()' method at application startup.")
+        if self.vector_store is None:
+            raise RuntimeError("Vector store is not initialized.")
+        top_docs = self.vector_store.similarity_search(resume_text, k=1)
+        if not top_docs:
+            return ""
+        return top_docs[0].page_content
 
-
-# 싱글톤 인스턴스
 rag_service = RagService()
