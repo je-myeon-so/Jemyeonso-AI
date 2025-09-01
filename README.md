@@ -1,7 +1,8 @@
 # Jemyeonso-AI
 
 <p align="center">
-   <img width="200" height="200" alt="Jemyeonso AI Logo" src="" align="center">
+	<img width="200" height="200" alt="Jemyeonso AI Logo" src="https://github.com/user-attachments/assets/fbc5e739-c8d0-4267-862b-6b75ff25594f" align="center">
+
 </p>
 <p align="center"><h1 align="center">Jemyeonso-AI</h1></p>
 <p align="center">
