@@ -38,21 +38,23 @@ def generate_questions(previous_questions: list[str]) -> str:
 def generate_question(question_level: str, job_type: str, question_category: str, 
                      previous_question: Optional[str], previous_answer: Optional[str], 
                      document_id: Optional[str]) -> QuestionData:
-    """면접 질문 생성 (RAG 기반 CultureFit 분기 + 기존 로직, 중복 방지 포함)"""
+    """면접 질문 생성 (중복 방지 로직 포함)"""
 
-    # 이력서 내용 (CultureFit 또는 일반질문 시 필요)
-    resume_text: Optional[str] = None
-    if document_id:
+    # --- RAG 기반 CultureFit 질문 생성 ---
+    if question_category == "CultureFit":
+        if not document_id:
+            raise ValueError("CultureFit 질문 생성을 위해 document_id가 필요합니다.")
+
         resume_text = get_resume_text(document_id)
         if not resume_text:
             raise ValueError("이력서 내용을 찾을 수 없습니다.")
 
-    # --- RAG 기반 CultureFit 질문 생성 ---
-    if question_category == "CultureFit":
-        if not resume_text:
-            raise ValueError("CultureFit 질문 생성을 위해 document_id와 이력서 내용이 필요합니다.")
         try:
             context = rag_service.get_culturefit_context(resume_text)
+            previous_questions = question_cache.get_previous_questions(
+                document_id, job_type, question_category, question_level
+            )
+            previous_questions_section = generate_questions(previous_questions)
             prompt_template = load_prompt("culturefit.txt")
             prompt = prompt_template.format(
                 context=context,
@@ -60,7 +62,7 @@ def generate_question(question_level: str, job_type: str, question_category: str
                 job_type=job_type,
                 question_level=question_level,
                 question_category=question_category,
-                previous_questions_section=previous_questions_section,
+                previous_questions_section=previous_questions_section
             )
             response = call_llm(
                 prompt,
@@ -70,7 +72,7 @@ def generate_question(question_level: str, job_type: str, question_category: str
             generated_question = response.strip() if isinstance(response, str) else str(response)
             return {
                 "questionType": "일반질문",
-                "question": generated_question,
+                "question": response.strip() if isinstance(response, str) else str(response)
             }
         except Exception as e:
             print(f"❌ RAG 질문 생성 실패: {e}")
@@ -84,23 +86,28 @@ def generate_question(question_level: str, job_type: str, question_category: str
     if question_type == "일반질문":
         if not document_id:
             raise ValueError("일반질문 생성을 위해 document_id가 필요합니다.")
-
+            
+        # 중복 방지: 이전 질문들 조회
         previous_questions = question_cache.get_previous_questions(
             document_id, job_type, question_category, question_level
         )
 
-        previous_questions_section = generate_questions(previous_questions)
-
-        if resume_text is None:
+        # 이력서 내용 조회
+        resume_text = get_resume_text(document_id)
+        if not resume_text:
             raise ValueError("이력서 내용을 찾을 수 없습니다.")
 
+        # 이전 질문들을 프롬프트에 포함
+        previous_questions_section = generate_questions(previous_questions)
+
+        # 프롬프트 구성
         prompt = prompt_template.format(
             resume_text=resume_text,
             question_level=question_level,
             job_type=job_type,
             question_category=question_category,
             question_type=question_type,
-            previous_questions_section=previous_questions_section,
+            previous_questions_section=previous_questions_section
         )
     else:
         prompt = prompt_template.format(
@@ -109,27 +116,30 @@ def generate_question(question_level: str, job_type: str, question_category: str
             question_level=question_level,
             job_type=job_type,
             question_category=question_category,
-            question_type=question_type,
+            question_type=question_type
         )
 
     try:
         response = call_llm(
             prompt,
-            temperature=0.8,
-            max_tokens=512,
+            temperature=0.8 if question_type == "일반질문" else 0.8,
+            max_tokens=512
         )
-
+        
         generated_question = response.strip() if isinstance(response, str) else str(response)
 
+        # 캐시에 새 질문 저장 (일반질문만)
         if question_type == "일반질문" and document_id:
             question_cache.add_question(
                 document_id, job_type, question_category, question_level, generated_question
             )
-
+        
         return {
             "questionType": question_type,
-            "question": generated_question,
+            "question": response.strip() if isinstance(response, str) else str(response)
+
         }
+
     except Exception as e:
         print("❌ 질문 생성 실패:", e)
         return fallback_question()
