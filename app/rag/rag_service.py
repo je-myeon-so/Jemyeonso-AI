@@ -8,15 +8,10 @@ from bs4 import BeautifulSoup
 
 from langchain_community.vectorstores import Chroma
 from langchain_core.documents import Document
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import Runnable, RunnablePassthrough
+from langchain_core.runnables import Runnable
 
 # HuggingFace 임베딩 관련
-from sentence_transformers import SentenceTransformer
-from langchain_community.embeddings import HuggingFaceEmbeddings
-
-from app.interview.prompt_loader import load_prompt
+from langchain_huggingface import HuggingFaceEmbeddings
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -42,9 +37,30 @@ CULTURE_URLS = [
 
 def _scrape_text_from_url(url: str) -> str:
     try:
-        resp = requests.get(url, timeout=10)
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Charset": "utf-8, iso-8859-1;q=0.5"
+        }
+        resp = requests.get(url, timeout=10, headers=headers)
         resp.raise_for_status()
-        soup = BeautifulSoup(resp.text, "html.parser")
+
+        # 인코딩 결정: Header > charset-normalizer > apparent_encoding > utf-8
+        encoding = resp.encoding
+        if not encoding or encoding.lower() in ("iso-8859-1", "ascii"):
+            try:
+                from charset_normalizer import from_bytes
+                best = from_bytes(resp.content).best()
+                if best and best.encoding:
+                    encoding = best.encoding
+                else:
+                    encoding = resp.apparent_encoding or "utf-8"
+            except Exception:
+                encoding = resp.apparent_encoding or "utf-8"
+
+        html = resp.content.decode(encoding, errors="replace")
+        soup = BeautifulSoup(html, "html.parser")
+
         # 주요 본문 추출 
         # 우선 article/main/body에서 p 태그 텍스트를 모두 합침
         candidates = soup.find_all(['article', 'main', 'body'])
@@ -76,6 +92,7 @@ class RagService:
         self.vector_store: Optional[Chroma] = None
         self.chain: Optional[Runnable] = None
         self.is_initialized: bool = False
+        self.retriever = None
 
     def initialize(self) -> None:
         if self.is_initialized:
@@ -84,7 +101,6 @@ class RagService:
         logger.info("Initializing RagService with HuggingFace embedding and temp Chroma DB...")
         try:
             # 1. HuggingFace 임베딩 모델 로드
-            model = SentenceTransformer(self.EMBED_MODEL_NAME)
             self.embedding_model = HuggingFaceEmbeddings(model_name=self.EMBED_MODEL_NAME, model_kwargs={"device": "cpu"})
 
             # 2. 각 URL에서 본문 텍스트 스크래핑
@@ -107,29 +123,8 @@ class RagService:
                 persist_directory=self.TEMP_DB_DIR
             )
 
-            # 4. Retriever 생성 (상위 3개 문서)
-            retriever = self.vector_store.as_retriever(search_kwargs={"k": 3})
-
-            # 5. 프롬프트 S3/로컬에서 동적 로드
-            try:
-                template = load_prompt("culturefit.txt")
-            except Exception as e:
-                logger.error(f"Failed to load culturefit prompt: {e}")
-                raise
-            prompt = ChatPromptTemplate.from_template(template)
-
-            def dummy_llm(inputs: dict) -> str:
-                return f"[프롬프트] {inputs}"
-
-            self.chain = (
-                {
-                    "context": retriever | _format_docs,
-                    "resume_text": RunnablePassthrough(),
-                }
-                | prompt
-                | dummy_llm
-                | StrOutputParser()
-            )
+            # 4. Retriever 생성 (상위 k 문서)
+            self.retriever = self.vector_store.as_retriever(search_kwargs={"k": 2})
 
             self.is_initialized = True
             logger.info("RagService initialized successfully.")
@@ -144,10 +139,10 @@ class RagService:
         if not self.is_initialized:
             raise RuntimeError("RagService is not initialized. Call the 'initialize()' method at application startup.")
         if self.vector_store is None:
-            raise RuntimeError("Vector store is not initialized.")
-        top_docs = self.vector_store.similarity_search(resume_text, k=1)
-        if not top_docs:
+            raise RuntimeError("Vector store or retriever is not initialized.")
+        relevant_docs = self.retriever.get_relevant_documents(resume_text)
+        if not relevant_docs:
             return ""
-        return top_docs[0].page_content
+        return _format_docs(relevant_docs)
 
 rag_service = RagService()
