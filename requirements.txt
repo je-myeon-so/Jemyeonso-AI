@@ -65,3 +65,11 @@ httpx==0.28.1
 fastapi[testing]==0.115.12
 responses==0.25.3
 faker==30.8.2
+
+# --- LangChain & RAG stack additions ---
+langchain==0.3.7
+langchain-openai==0.2.11
+langchain-community==0.3.7
+chromadb==0.5.18
+beautifulsoup4==4.12.3
+sentence-transformers==2.7.0
