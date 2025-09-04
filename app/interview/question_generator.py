@@ -69,10 +69,10 @@ def generate_question(question_level: str, job_type: str, question_category: str
                 temperature=0.8,
                 max_tokens=512,
             )
-            generated_question = response.strip() if isinstance(response, str) else str(response)
+            question_text = response.strip() if isinstance(response, str) else str(response)
             return {
                 "questionType": "일반질문",
-                "question": response.strip() if isinstance(response, str) else str(response)
+                "question": question_text
             }
         except Exception as e:
             print(f"❌ RAG 질문 생성 실패: {e}")
@@ -86,7 +86,7 @@ def generate_question(question_level: str, job_type: str, question_category: str
     if question_type == "일반질문":
         if not document_id:
             raise ValueError("일반질문 생성을 위해 document_id가 필요합니다.")
-            
+
         # 중복 방지: 이전 질문들 조회
         previous_questions = question_cache.get_previous_questions(
             document_id, job_type, question_category, question_level
@@ -125,7 +125,7 @@ def generate_question(question_level: str, job_type: str, question_category: str
             temperature=0.8 if question_type == "일반질문" else 0.8,
             max_tokens=512
         )
-        
+
         generated_question = response.strip() if isinstance(response, str) else str(response)
 
         # 캐시에 새 질문 저장 (일반질문만)
@@ -133,7 +133,7 @@ def generate_question(question_level: str, job_type: str, question_category: str
             question_cache.add_question(
                 document_id, job_type, question_category, question_level, generated_question
             )
-        
+
         return {
             "questionType": question_type,
             "question": response.strip() if isinstance(response, str) else str(response)
