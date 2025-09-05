@@ -55,13 +55,13 @@ jobs:
         run: |
           ssh -i $SSH_KEY_PATH -o StrictHostKeyChecking=no ubuntu@${{ secrets.TEST_SERVER_IP }} "
             export FULL_IMAGE=\$ECR_BASE/\$ECR_REPO:fastapi-latest
-            
+
             echo \"[INFO] Logging in to ECR using EC2 Role...\"
             aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin \$ECR_BASE
-            
+
             echo \"[INFO] Pulling image: \$FULL_IMAGE\"
             docker pull \$FULL_IMAGE
-            
+
             echo \"[INFO] Running deploy script...\"
             bash /home/ubuntu/deploy/scripts/deploy.sh
           "
