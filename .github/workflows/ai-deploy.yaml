@@ -54,20 +54,16 @@ jobs:
       - name: SSH to OpenVPN and deploy FastAPI
         run: |
           ssh -i $SSH_KEY_PATH -o StrictHostKeyChecking=no ubuntu@${{ secrets.TEST_SERVER_IP }} "
-            export AWS_REGION=${{ env.AWS_REGION }}
-            export ECR_BASE=${{ env.ECR_BASE }}
-            export ECR_REPO=${{ env.ECR_REPO }}
-            export IMAGE_TAG=${{ env.IMAGE_TAG }}
-            export FULL_IMAGE="$ECR_BASE/$ECR_REPO:fastapi-latest"
-
-            echo "[INFO] Logging in to ECR..."
-            aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_BASE
-
-            echo "[INFO] Pulling image: \$FULL_IMAGE"
+            export FULL_IMAGE=\$ECR_BASE/\$ECR_REPO:spring-latest
+          
+            echo \"[INFO] Logging in to ECR...\"
+            aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin \$ECR_BASE
+          
+            echo \"[INFO] Pulling image: \$FULL_IMAGE\"
             docker pull \$FULL_IMAGE
-
-            echo "[INFO] Running deploy script..."
+          
+            echo \"[INFO] Running deploy script...\"
             bash /home/ubuntu/deploy/scripts/deploy.sh
-            "
-          EOF
+          "
+
 
