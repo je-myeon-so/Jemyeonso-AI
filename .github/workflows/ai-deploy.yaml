@@ -53,7 +53,7 @@ jobs:
 
       - name: SSH to OpenVPN and deploy FastAPI
         run: |
-          ssh -i $SSH_KEY_PATH -o StrictHostKeyChecking=no ubuntu@${{ secrets.TEST_SERVER_IP }} '
+          ssh -i $SSH_KEY_PATH -o StrictHostKeyChecking=no ubuntu@${{ secrets.TEST_SERVER_IP }} "
             export AWS_REGION=${{ env.AWS_REGION }}
             export ECR_BASE=${{ env.ECR_BASE }}
             export ECR_REPO=${{ env.ECR_REPO }}
@@ -68,6 +68,6 @@ jobs:
 
             echo "[INFO] Running deploy script..."
             bash /home/ubuntu/deploy/scripts/deploy.sh
-            '
+            "
           EOF
 
