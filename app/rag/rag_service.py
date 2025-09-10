@@ -11,7 +11,7 @@ from langchain_core.documents import Document
 from langchain_core.runnables import Runnable
 
 # HuggingFace 임베딩 관련
-from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_huggingface.embeddings import HuggingFaceEmbeddings
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -22,20 +22,24 @@ CULTURE_URLS = [
         "url": "https://medium.com/daangn/%EB%8B%B9%EA%B7%BC%EB%A7%88%EC%BC%93-it-%EA%B0%9C%EB%B0%9C-%ED%98%91%EC%97%85-%EC%9D%B4%EC%95%BC%EA%B8%B0-%EA%B0%9C%EB%B0%9C%EC%9E%90-%EB%94%94%EC%9E%90%EC%9D%B4%EB%84%88-pm-fff69de54015"
     },
     {
-        "company": "우아한형제들(배달의민족)",
-        "url": "https://techblog.woowahan.com/14671/"
+        "company": "뱅크샐러드",
+        "url": "https://blog.banksalad.com/pnc/team-interview-engineer/"
     },
     {
-        "company": "우아한형제들(배달의민족)",
-        "url": "https://techblog.woowahan.com/9059/"
+        "company": "카카오뱅크",
+        "url": "https://brunch.co.kr/@kakaobankplus/89"
     },
     {
-        "company": "토스",
-        "url": "https://toss.im/career/article/culture-evangelist-session?utm_source=toss_careerpage&utm_medium=banner&utm_campaign=2311_cemeetup"
+        "company": "쿠팡",
+        "url": "https://particleseoul.tistory.com/1315"
     },
+    {
+        "company": "배달의 민족",
+        "url": "https://story.baemin.com/6444/"
+    }
 ]
 
-def _scrape_text_from_url(url: str) -> str:
+def direct_scraping(url: str) -> str:
     try:
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
@@ -73,10 +77,58 @@ def _scrape_text_from_url(url: str) -> str:
             text = "\n".join([p.get_text(strip=True) for p in soup.find_all('p')])
         return text.strip()
     except Exception as e:
-        logger.error(f"[스크래핑 실패] {url}: {e}")
+        logger.warning(f"[직접 스크래핑 실패] {url}: {e}")
         return ""
 
-def _format_docs(documents: List[Document]) -> str:
+def jina_reader_scraping(url: str) -> str:
+    """Jina Reader API를 사용한 폴백 스크래핑"""
+    try:
+        jina_api_key = os.getenv('JINA_API_KEY')
+        if not jina_api_key:
+            logger.warning("JINA_API_KEY가 설정되지 않았습니다.")
+            return ""
+
+        jina_url = f"https://r.jina.ai/{url}"
+        headers = {
+            "Authorization": f"Bearer {jina_api_key}",
+            "Accept": "application/json"
+        }
+
+        resp = requests.get(jina_url, headers=headers, timeout=15)
+        resp.raise_for_status()
+
+        response_data = resp.json()
+
+        # API 응답 구조에 맞게 data 객체 내부의 content를 추출
+        data_object = response_data.get("data", {})
+        content = data_object.get("content", "").strip()
+        
+        if content:
+            logger.info(f"[Jina Reader 성공] {url}: {len(content)}자 추출")
+            return content
+        else:
+            logger.warning(f"[Jina Reader 빈 응답] {url}")
+            return ""
+            
+    except Exception as e:
+        logger.error(f"[Jina Reader 실패] {url}: {e}")
+        return ""
+
+def scrape_text_from_url(url: str) -> str:
+    """
+    두 단계 스크래핑: 1차 직접 스크래핑 → 2차 Jina Reader 사용
+    """
+    # 1차: beautifulsoup4 사용
+    text = direct_scraping(url)
+    if len(text) > 100:  # 충분한 텍스트가 있으면
+        logger.info(f"[직접 스크래핑 성공] {url}: {len(text)}자 추출")
+        return text
+    
+    # 2차: Jina Reader 사용 (JS 렌더링, 봇 차단 우회)
+    logger.info(f"[Jina Reader 폴백 시도] {url}")
+    return jina_reader_scraping(url)
+
+def format_docs(documents: List[Document]) -> str:
     contents = [doc.page_content for doc in documents if doc.page_content]
     return "\n\n".join(contents)
 
@@ -106,7 +158,7 @@ class RagService:
             # 2. 각 URL에서 본문 텍스트 스크래핑
             docs = []
             for entry in CULTURE_URLS:
-                text = _scrape_text_from_url(entry["url"])
+                text = scrape_text_from_url(entry["url"])
                 if text:
                     docs.append(Document(page_content=text, metadata={"company": entry["company"], "url": entry["url"]}))
                 else:
@@ -143,6 +195,6 @@ class RagService:
         relevant_docs = self.retriever.get_relevant_documents(resume_text)
         if not relevant_docs:
             return ""
-        return _format_docs(relevant_docs)
+        return format_docs(relevant_docs)
 
 rag_service = RagService()
