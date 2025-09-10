@@ -1,15 +1,11 @@
 FROM python:3.12.7-slim
 
+COPY ./requirements.txt /fastapi/
+COPY . /fastapi
+
 WORKDIR /fastapi
 
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
-
-COPY ./requirements.txt ./
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
-
-COPY . .
+RUN pip install pip==24.2 && pip install --no-cache-dir -r ./requirements.txt
 
 EXPOSE 8000
 
