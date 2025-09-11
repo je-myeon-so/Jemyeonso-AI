@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.router import health, interview, resume, s3_connection, pii_check
+from app.router import health, interview, resume, s3_connection, pii_check, cache
 from app.core.question_cache import question_cache
 from app.interview.prompt_loader import preload_prompts
 from contextlib import asynccontextmanager
@@ -28,6 +28,7 @@ app = FastAPI(
 
 app.include_router(interview.router, prefix="/api/ai")
 app.include_router(resume.router, prefix="/api/ai")
+app.include_router(cache.router, prefix="/api/ai")
 app.include_router(s3_connection.router)
 app.include_router(pii_check.router, prefix="/api/ai")
 app.include_router(health.router)
