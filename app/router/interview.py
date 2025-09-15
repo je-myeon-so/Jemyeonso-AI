@@ -1,11 +1,12 @@
 from fastapi import APIRouter
-from typing import List
 from app.interview.answer_analyzer import analyze_answer
 from app.interview.question_generator import generate_question, fallback_question
+from app.interview.improvement_analyzer import analyze_improvement
 from app.core.question_cache import question_cache
 from app.schemas.interview import (
     AnalyzeAnswerRequest, AnalyzeAnswerResponse,
-    GenerateQuestionRequest, GenerateQuestionResponse
+    GenerateQuestionRequest, GenerateQuestionResponse,
+    ImproveRequest, ImproveResponse
 )
 
 router = APIRouter(tags=["인터뷰"])
@@ -58,6 +59,40 @@ def analyze(request: AnalyzeAnswerRequest):
         "data": result
     }
 
+@router.post("/improve", response_model=ImproveResponse)
+def analyze_improvement_endpoint(request: ImproveRequest):
+    """
+    면접 종합 분석을 수행하여 전체적인 피드백을 제공합니다.
+    
+    Args:
+        request (ImproveRequest): 면접 분석 요청 데이터
+        
+    Returns:
+        ImproveResponse: 면접 분석 결과
+    """
+    try:
+        result = analyze_improvement(
+            interview_id=request.interviewId,
+            job_type=request.jobType,
+            qa_list=request.qaList
+        )
+        
+        return {
+            "code": 200,
+            "message": "면접 종합 분석을 완료했습니다.",
+            "data": result
+        }
+        
+    except Exception as e:
+        print(f"❌ 면접 분석 중 오류 발생: {e}")
+        return {
+            "code": 500,
+            "message": "면접 분석 중 오류가 발생했습니다.",
+            "data": {
+                "interviewId": request.interviewId,
+                "overallComment": "분석 중 오류가 발생했습니다. 다시 시도해주세요."
+            }
+        }
 
 @router.delete("/questions/cache/{document_id}")
 def clear_question_cache(document_id: str):
