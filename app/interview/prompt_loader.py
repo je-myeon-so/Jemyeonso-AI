@@ -89,7 +89,7 @@ class PromptLoader:
         try:
             prompt_files = [f.name for f in prompts_dir.iterdir() if f.is_file() and f.suffix == '.txt']
         except OSError:
-            prompt_files = ["analysis.txt", "follow_up.txt", "question.txt", "concept_extraction.txt"]
+            prompt_files = ["analysis.txt", "follow_up.txt", "question.txt", "concept_extraction.txt", "culturefit.txt", "improvement_analysis.txt"]
 
         for filename in prompt_files:
             try:
