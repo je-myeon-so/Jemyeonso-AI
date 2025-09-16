@@ -36,6 +36,7 @@ class AnswerAnalysisItem(BaseModel):
     suggestion: str
 
 class AnalyzeAnswerData(BaseModel):
+    score: int
     analysis: List[AnswerAnalysisItem]
 
 class AnalyzeAnswerResponse(BaseModel):

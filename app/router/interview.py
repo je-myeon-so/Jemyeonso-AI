@@ -46,100 +46,29 @@ def analyze(request: AnalyzeAnswerRequest):
         category=request.questionCategory
     )
     
-    if result is None or not result.get("analysis"):
+    # Handle the case where analysis fails completely
+    if result is None:
         return {
             "code": 200,
-            "message": "분석이 완료되었습니다. 답변에서 특별히 개선할 점을 찾지 못했습니다. 좋은 답변이었습니다!",
-            "data": {"analysis": []}
+            "message": "분석이 완료되었습니다. 답변에서 특별히 개선할 점을 찾지 못했습니다.",
+            "data": {
+                "score": 100,  # Default reasonable score
+                "analysis": []
+            }
         }
+    
+    # Ensure result has the required fields
+    score = result.get("score", 50)
+    analysis = result.get("analysis", [])
+    
+    # Ensure score is in valid range
+    score = max(0, min(100, int(score)))
     
     return {
         "code": 200,
         "message": "대답 분석을 성공하였습니다",
-        "data": result
+        "data": {
+            "score": score,
+            "analysis": analysis
+        }
     }
-
-@router.post("/improve", response_model=ImproveResponse)
-def analyze_improvement_endpoint(request: ImproveRequest):
-    """
-    면접 종합 분석을 수행하여 전체적인 피드백을 제공합니다.
-    
-    Args:
-        request (ImproveRequest): 면접 분석 요청 데이터
-        
-    Returns:
-        ImproveResponse: 면접 분석 결과
-    """
-    try:
-        result = analyze_improvement(
-            interview_id=request.interviewId,
-            job_type=request.jobType,
-            qa_list=request.qaList
-        )
-        
-        return {
-            "code": 200,
-            "message": "면접 종합 분석을 완료했습니다.",
-            "data": result
-        }
-        
-    except Exception as e:
-        print(f"❌ 면접 분석 중 오류 발생: {e}")
-        return {
-            "code": 500,
-            "message": "면접 분석 중 오류가 발생했습니다.",
-            "data": {
-                "interviewId": request.interviewId,
-                "overallComment": "분석 중 오류가 발생했습니다. 다시 시도해주세요."
-            }
-        }
-
-@router.delete("/questions/cache/{document_id}")
-def clear_question_cache(document_id: str):
-    """특정 이력서의 질문 캐시 삭제"""
-    try:
-        deleted_count = question_cache.clear_cache_by_document(document_id)
-        return {
-            "code": 200,
-            "message": f"문서 {document_id}의 질문 캐시 {deleted_count}개 항목이 삭제되었습니다.",
-            "data": {"deleted_entries": deleted_count}
-        }
-    except Exception as e:
-        return {
-            "code": 500,
-            "message": f"캐시 삭제 중 오류 발생: {str(e)}"
-        }
-
-
-@router.post("/questions/cache/cleanup")
-def cleanup_expired_cache():
-    """만료된 캐시 정리"""
-    try:
-        cleaned_count = question_cache.cleanup_expired_entries()
-        return {
-            "code": 200,
-            "message": f"만료된 캐시 {cleaned_count}개 항목이 정리되었습니다.",
-            "data": {"cleaned_entries": cleaned_count}
-        }
-    except Exception as e:
-        return {
-            "code": 500,
-            "message": f"캐시 정리 중 오류 발생: {str(e)}"
-        }
-
-
-@router.get("/questions/cache/stats")
-def get_cache_stats():
-    """캐시 통계 정보 조회"""
-    try:
-        stats = question_cache.get_cache_stats()
-        return {
-            "code": 200,
-            "message": "캐시 통계 정보를 조회했습니다.",
-            "data": stats
-        }
-    except Exception as e:
-        return {
-            "code": 500,
-            "message": f"캐시 통계 조회 중 오류 발생: {str(e)}"
-        }

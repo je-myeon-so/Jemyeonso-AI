@@ -1,5 +1,5 @@
 """
-Tests for Answer Analyzer
+Tests for Enhanced Answer Analyzer with Scoring
 """
 import pytest
 import json
@@ -192,22 +192,58 @@ class TestAnalyzeAnswer:
     """Test cases for analyze_answer function"""
 
     @pytest.mark.unit
+    @patch('app.interview.answer_analyzer.calculate_enhanced_score')
     @patch('app.interview.answer_analyzer.extract_technical_concepts')
     @patch('app.interview.answer_analyzer.get_wikipedia_context')
     @patch('app.interview.answer_analyzer.load_prompt')
     @patch('app.interview.answer_analyzer.call_llm')
-    def test_analyze_answer_success(self, mock_call_llm, mock_load_prompt, 
-                                  mock_get_wiki_context, mock_extract_concepts):
-        """Test successful answer analysis"""
+    def test_analyze_answer_fallback_to_scoring_engine(self, mock_call_llm, mock_load_prompt,
+                                                      mock_get_wiki_context, mock_extract_concepts,
+                                                      mock_enhanced_score):
+        """Test fallback to scoring engine when LLM fails"""
+        mock_extract_concepts.return_value = ["Python"]
+        mock_get_wiki_context.return_value = ""
+        mock_load_prompt.return_value = "template"
+        mock_call_llm.side_effect = ConnectionError("Network error")
+        
+        # Mock scoring engine response
+        mock_enhanced_score.return_value = (70, [
+            {
+                "errorText": "답변이 짧습니다",
+                "errorType": "깊이_부족",
+                "feedback": "더 자세한 설명이 필요합니다",
+                "suggestion": "구체적인 예시를 추가해보세요"
+            }
+        ])
+        
+        result = analyze_answer("Q", "A", "Dev", "Junior", "Tech")
+        
+        assert result["score"] == 70
+        assert len(result["analysis"]) == 1
+        mock_enhanced_score.assert_called_once()
+
+    @pytest.mark.unit
+    @patch('app.interview.answer_analyzer.extract_technical_concepts')
+    @patch('app.interview.answer_analyzer.get_wikipedia_context')
+    @patch('app.interview.answer_analyzer.load_prompt')
+    @patch('app.interview.answer_analyzer.call_llm')
+    def test_analyze_answer_success_with_score(self, mock_call_llm, mock_load_prompt, 
+                                             mock_get_wiki_context, mock_extract_concepts):
+        """Test successful answer analysis with scoring"""
         mock_extract_concepts.return_value = ["Python", "Django"]
         mock_get_wiki_context.return_value = "Wiki context"
         mock_load_prompt.return_value = "Analysis template: {question} {text} {jobtype} {level} {category}"
         
         mock_analysis_result = {
             "score": 85,
-            "feedback": "Good technical explanation",
-            "strengths": ["Clear explanation", "Good examples"],
-            "improvements": ["Could add more details"]
+            "analysis": [
+                {
+                    "errorText": "부족한 예시",
+                    "errorType": "깊이_부족",
+                    "feedback": "구체적인 예시가 부족합니다",
+                    "suggestion": "실제 경험이나 프로젝트 사례를 추가해보세요"
+                }
+            ]
         }
         mock_call_llm.return_value = json.dumps(mock_analysis_result)
         
@@ -219,10 +255,61 @@ class TestAnalyzeAnswer:
             category="Technical"
         )
         
-        assert result == mock_analysis_result
+        assert result["score"] == 85
+        assert len(result["analysis"]) == 1
+        assert result["analysis"][0]["errorType"] == "깊이_부족"
         mock_extract_concepts.assert_called_once()
         mock_get_wiki_context.assert_called_once()
         mock_call_llm.assert_called_once()
+
+    @pytest.mark.unit
+    @patch('app.interview.answer_analyzer.extract_technical_concepts')
+    @patch('app.interview.answer_analyzer.get_wikipedia_context')
+    @patch('app.interview.answer_analyzer.load_prompt')
+    @patch('app.interview.answer_analyzer.call_llm')
+    def test_analyze_answer_perfect_score(self, mock_call_llm, mock_load_prompt,
+                                        mock_get_wiki_context, mock_extract_concepts):
+        """Test analysis with perfect score and no improvements needed"""
+        mock_extract_concepts.return_value = ["React", "JavaScript"]
+        mock_get_wiki_context.return_value = ""
+        mock_load_prompt.return_value = "template"
+        
+        mock_analysis_result = {
+            "score": 100,
+            "analysis": []  # Perfect answer with no issues
+        }
+        mock_call_llm.return_value = json.dumps(mock_analysis_result)
+        
+        result = analyze_answer("Explain React", "React is...", "Frontend", "Senior", "Technical")
+        
+        assert result["score"] == 100
+        assert result["analysis"] == []
+
+    @pytest.mark.unit
+    @patch('app.interview.answer_analyzer.extract_technical_concepts')
+    @patch('app.interview.answer_analyzer.get_wikipedia_context')
+    @patch('app.interview.answer_analyzer.load_prompt')
+    @patch('app.interview.answer_analyzer.call_llm')
+    def test_analyze_answer_score_validation(self, mock_call_llm, mock_load_prompt,
+                                           mock_get_wiki_context, mock_extract_concepts):
+        """Test that scores are validated to be in 0-100 range"""
+        mock_extract_concepts.return_value = []
+        mock_get_wiki_context.return_value = ""
+        mock_load_prompt.return_value = "template"
+        
+        # Test score above 100
+        mock_analysis_result = {"score": 150, "analysis": []}
+        mock_call_llm.return_value = json.dumps(mock_analysis_result)
+        
+        result = analyze_answer("Q", "A", "Dev", "Junior", "Tech")
+        assert result["score"] == 100  # Should be capped at 100
+        
+        # Test negative score
+        mock_analysis_result = {"score": -10, "analysis": []}
+        mock_call_llm.return_value = json.dumps(mock_analysis_result)
+        
+        result = analyze_answer("Q", "A", "Dev", "Junior", "Tech")
+        assert result["score"] == 0  # Should be floored at 0
 
     @pytest.mark.unit
     @patch('app.interview.answer_analyzer.extract_technical_concepts')

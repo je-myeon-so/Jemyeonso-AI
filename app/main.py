@@ -32,12 +32,13 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Jemyeonso API",
     description="이력서 기반 면접 준비 시스템",
-    version="2.0.0", # 버전 업데이트
+    version="2.0.0",
     lifespan=lifespan
 )
 
 app.include_router(interview.router, prefix="/api/ai")
 app.include_router(resume.router, prefix="/api/ai")
+app.include_router(cache.router, prefix="/api/ai")
 app.include_router(s3_connection.router)
 app.include_router(pii_check.router, prefix="/api/ai")
 app.include_router(health.router)
