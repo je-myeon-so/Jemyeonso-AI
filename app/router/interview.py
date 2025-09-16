@@ -1,11 +1,12 @@
 from fastapi import APIRouter
-from typing import List
 from app.interview.answer_analyzer import analyze_answer
 from app.interview.question_generator import generate_question, fallback_question
+from app.interview.improvement_analyzer import analyze_improvement
 from app.core.question_cache import question_cache
 from app.schemas.interview import (
     AnalyzeAnswerRequest, AnalyzeAnswerResponse,
-    GenerateQuestionRequest, GenerateQuestionResponse
+    GenerateQuestionRequest, GenerateQuestionResponse,
+    ImproveRequest, ImproveResponse
 )
 
 router = APIRouter(tags=["인터뷰"])

@@ -43,3 +43,23 @@ class AnalyzeAnswerResponse(BaseModel):
     code: int
     message: str
     data: AnalyzeAnswerData
+
+# -------- 면접 개선점 생성 요청/응답 --------
+
+class QAItem(BaseModel):
+    question: str
+    answer: str
+
+class ImproveRequest(BaseModel):
+    interviewId: int
+    jobType: str
+    qaList: List[QAItem]
+
+class ImproveResponseData(BaseModel):
+    interviewId: int
+    overallComment: str
+
+class ImproveResponse(BaseModel):
+    code: int
+    message: str
+    data: ImproveResponseData

@@ -1,28 +1,38 @@
 from fastapi import FastAPI
-from app.router import health, interview, resume, s3_connection, pii_check, cache
+from contextlib import asynccontextmanager
+
+from app.router import health, interview, resume, s3_connection, pii_check
 from app.core.question_cache import question_cache
 from app.interview.prompt_loader import preload_prompts
-from contextlib import asynccontextmanager
+from app.rag.rag_service import rag_service
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print("🚀 Starting application...")
+    print("Starting application...")
 
     preload_prompts()
     print("Prompts preloaded")
     await question_cache.start_background_cleanup()
     print("Cache cleanup task started")
+
+    # RAG 서비스 초기화 추가
+    try:
+        rag_service.initialize()
+        print("RAG service initialized successfully.")
+    except Exception as e:
+        print(f"Failed to initialize RAG service: {e}")
+
     print("Application startup complete")
     yield
     
-    print("🔽 Shutting down application...")
+    print("Shutting down application...")
     await question_cache.stop_background_cleanup()
-    print("✅ Application shutdown complete")
+    print("Application shutdown complete")
 
 app = FastAPI(
     title="Jemyeonso API",
     description="이력서 기반 면접 준비 시스템",
-    version="1.5.0",
+    version="2.0.0",
     lifespan=lifespan
 )
 
