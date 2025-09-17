@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 
-from app.router import health, interview, resume, s3_connection, pii_check
+from app.router import health, interview, resume, s3_connection, pii_check, cache
 from app.core.question_cache import question_cache
 from app.interview.prompt_loader import preload_prompts
 from app.rag.rag_service import rag_service
