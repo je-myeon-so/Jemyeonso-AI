@@ -72,3 +72,38 @@ def analyze(request: AnalyzeAnswerRequest):
             "analysis": analysis
         }
     }
+
+@router.post("/improve", response_model=ImproveResponse)
+def analyze_improvement_endpoint(request: ImproveRequest):
+    """
+    면접 종합 분석을 수행하여 전체적인 피드백을 제공합니다.
+    
+    Args:
+        request (ImproveRequest): 면접 분석 요청 데이터
+        
+    Returns:
+        ImproveResponse: 면접 분석 결과
+    """
+    try:
+        result = analyze_improvement(
+            interview_id=request.interviewId,
+            job_type=request.jobType,
+            qa_list=request.qaList
+        )
+
+        return {
+            "code": 200,
+            "message": "면접 종합 분석을 완료했습니다.",
+            "data": result
+        }
+
+    except Exception as e:
+        print(f"❌ 면접 분석 중 오류 발생: {e}")
+        return {
+            "code": 500,
+            "message": "면접 분석 중 오류가 발생했습니다.",
+            "data": {
+                "interviewId": request.interviewId,
+                "overallComment": "분석 중 오류가 발생했습니다. 다시 시도해주세요."
+            }
+        }
