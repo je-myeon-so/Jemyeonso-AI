@@ -80,6 +80,7 @@ def analyze_improvement_endpoint(request: ImproveRequest):
     
     Args:
         request (ImproveRequest): 면접 분석 요청 데이터
+            qa_list: 면접 전체 세션 정보
         
     Returns:
         ImproveResponse: 면접 분석 결과
