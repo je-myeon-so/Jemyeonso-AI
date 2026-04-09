@@ -5,6 +5,11 @@
 <p align="center"><h1 align="center">Jemyeonso-AI</h1></p>
 <p align="center">
 	<em>AI-Powered Resume-Based Interview Preparation System<br>이력서 기반 인공지능 면접 준비 플랫폼</em>
+	<p align="center">
+  <a href="https://disquiet.io/product/%EC%A0%9C%EB%A9%B4%EC%86%8C">
+    <img src="https://disquiet.io/assets/gold-badge-BDLfTZOJ.svg" alt="Disquiet Product of the Week - Gold Badge" width="150" />
+  </a>
+</p>
 </p>
 <p align="center">
 	<img src="https://img.shields.io/github/last-commit/je-myeon-so/Jemyeonso-AI?style=flat&logo=git&logoColor=white&color=0080ff" alt="last-commit">
